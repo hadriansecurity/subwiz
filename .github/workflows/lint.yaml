@@ -1,0 +1,30 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Lint Subwiz
+        if: always()
+        uses: psf/black@stable
+        with:
+          options: "--check --diff --color"
+          src: "./subwiz"
+
+      - name: Lint Tests
+        if: always()
+        uses: psf/black@stable
+        with:
+          options: "--check --diff --color"
+          src: "./tests"
