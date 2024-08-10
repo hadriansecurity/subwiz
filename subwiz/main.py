@@ -163,7 +163,7 @@ def run_inference(
     gpt_model = GPT.from_checkpoint(
         model_path, device=device, tokenizer_path=tokenizer_path
     )
-    tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_path)
+    tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_path, clean_up_tokenization_spaces=True)
 
     subs = [dom.subdomain for dom in input_domains]
     tokenizer_input = ",".join(sorted(subs)) + "[DELIM]"
