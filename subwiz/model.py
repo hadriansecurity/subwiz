@@ -160,7 +160,9 @@ class GPT(nn.Module):
         assert config.vocab_size is not None
         assert config.block_size is not None
         self.config = config
-        self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=config.tokenizer_file)
+        self.tokenizer = PreTrainedTokenizerFast(
+            tokenizer_file=config.tokenizer_file, clean_up_tokenization_spaces=True
+        )
         self.end_token = self.tokenizer("[END]")["input_ids"][0]
         self.comma_token = self.tokenizer(",")["input_ids"][0]
 
