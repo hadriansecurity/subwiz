@@ -87,6 +87,6 @@ It is downloaded when you first run subwiz.
 Typically, generative transformer models (e.g. ChatGPT) predict a single output sequence.
 Subwiz predicts the N most likely sequences using a beam search algorithm.
 
-![Diagram of the inference algorithm](subwiz_inference.png)
+![Diagram of the inference algorithm](https://raw.githubusercontent.com/hadriansecurity/subwiz/main/subwiz_inference.png)
 
 *Beam algorithm to predict the N most likely outputs from a generative transformer model.*
