@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "subwiz"
+version = "0.0.1"
+description = "A recon tool that uses AI to predict subdomains. Then returns those that resolve."
+readme = "README.md"
+requires-python = ">=3.7"
+authors = [{name = "Klaas Meinke", email = "klaas@hadrian.io"}]
+keywords = ["machine learning", "recon", "subdomains", "transformers"]
+license = {text = "MIT License"}
+dependencies = [
+    "aiodns>=1.0.0",
+    "huggingface-hub>=0.5.0",
+    "pydantic>=1.10.0",
+    "tldextract>=3.0.0",
+    "torch>=2.3.0",
+    "transformers>=4.34.0"
+]
+
+[project.scripts]
+subwiz = "subwiz.cli:main"
