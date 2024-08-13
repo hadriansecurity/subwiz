@@ -1,13 +1,16 @@
 import argparse
 
 from subwiz.main import (
-    positive_int_validator,
-    input_domains_file_validator,
-    device_validator,
-    temperature_validator,
+    download_files,
     run_inference,
     run_resolution,
-    download_files,
+)
+from subwiz.types import (
+    device_type,
+    input_domains_file_type,
+    output_file_type,
+    positive_int_type,
+    temperature_type,
 )
 
 
@@ -19,7 +22,14 @@ parser.add_argument(
     help="file containing new-line-separated subdomains.",
     dest="input_file",
     required=True,
-    type=input_domains_file_validator,
+    type=input_domains_file_type,
+)
+parser.add_argument(
+    "-o",
+    "--output-file",
+    help="output file to write new-line separated subdomains to.",
+    dest="output_file",
+    type=output_file_type,
 )
 parser.add_argument(
     "-n",
@@ -27,7 +37,7 @@ parser.add_argument(
     help="number of subdomains to predict.",
     dest="num_predictions",
     default=500,
-    type=positive_int_validator,
+    type=positive_int_type,
 )
 parser.add_argument(
     "--no-resolve",
@@ -47,7 +57,7 @@ parser.add_argument(
     help="add randomness to the model, recommended ≤ 0.3)",
     dest="temperature",
     default=0.0,
-    type=temperature_validator,
+    type=temperature_type,
 )
 parser.add_argument(
     "-d",
@@ -56,7 +66,7 @@ parser.add_argument(
     dest="device",
     default="auto",
     choices=["auto", "cpu", "cuda", "mps"],
-    type=device_validator,
+    type=device_type,
 )
 parser.add_argument(
     "-q",
@@ -64,14 +74,14 @@ parser.add_argument(
     help="maximum length of predicted subdomains in tokens.",
     dest="max_new_tokens",
     default=10,
-    type=positive_int_validator,
+    type=positive_int_type,
 )
 parser.add_argument(
     "--resolution_concurrency",
     help="number of concurrent resolutions.",
     dest="resolution_lim",
     default=128,
-    type=positive_int_validator,
+    type=positive_int_type,
 )
 args = parser.parse_args()
 
@@ -132,7 +142,12 @@ def main():
         predictions = run_resolution(predictions, resolution_lim=args.resolution_lim)
 
     output = "\n".join(sorted(predictions))
-    print(output)
+
+    if args.output_file:
+        with open(args.output_file, "w") as f:
+            f.write(output)
+    else:
+        print(output)
 
 
 if __name__ == "__main__":

@@ -26,14 +26,18 @@ Seed subwiz with these subdomains:
 ### Supported Switches
 
 ```commandline
-usage: cli.py [-h] -i INPUT_FILE [-n NUM_PREDICTIONS] [--no-resolve]
-              [--force-download] [-t TEMPERATURE] [-d {auto,cpu,cuda,mps}]
-              [-q MAX_NEW_TOKENS] [--resolution_concurrency RESOLUTION_LIM]
+usage: cli.py [-h] -i INPUT_FILE [-o OUTPUT_FILE] [-n NUM_PREDICTIONS]
+              [--no-resolve] [--force-download] [-t TEMPERATURE]
+              [-d {auto,cpu,cuda,mps}] [-q MAX_NEW_TOKENS]
+              [--resolution_concurrency RESOLUTION_LIM]
 
 options:
   -h, --help            show this help message and exit
   -i INPUT_FILE, --input-file INPUT_FILE
                         file containing new-line-separated subdomains.
+                        (default: None)
+  -o OUTPUT_FILE, --output-file OUTPUT_FILE
+                        output file to write new-line separated subdomains to.
                         (default: None)
   -n NUM_PREDICTIONS, --num_predictions NUM_PREDICTIONS
                         number of subdomains to predict. (default: 500)
