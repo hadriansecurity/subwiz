@@ -307,8 +307,12 @@ class GPT(nn.Module):
             # trim the sequences down to block size
             sequences = sequences[:, -self.config.block_size :]
 
-            # inference the model
-            logits, _ = self(sequences)
+            # inference the model in batches
+            batch_size = 500
+            logits, _ = self(sequences[:batch_size])
+            for j in range(batch_size, len(sequences), batch_size):
+                new_logits, _ = self(sequences[j : j + batch_size])
+                logits = torch.cat(tensors=(new_logits, logits), dim=1)
             logits = logits.squeeze(1)
 
             # take N most probable next tokens for each sequence
