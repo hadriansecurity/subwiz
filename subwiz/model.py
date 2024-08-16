@@ -311,7 +311,7 @@ class GPT(nn.Module):
             batch_size = 500
             logits, _ = self(sequences[:batch_size])
             for j in range(batch_size, len(sequences), batch_size):
-                new_logits, _ = self(sequences[j: j + batch_size])
+                new_logits, _ = self(sequences[j : j + batch_size])
                 logits = torch.cat(tensors=(new_logits, logits), dim=1)
             logits = logits.squeeze(1)
 
