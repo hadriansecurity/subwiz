@@ -1,4 +1,7 @@
 """
+This code is largely copied from the nanogpt repository by Andrej Karpathy.
+https://github.com/karpathy/nanoGPT
+
 Full definition of a GPT Language Model, all of it in this single file.
 References:
 1) the official GPT-2 TensorFlow implementation released by OpenAI:
@@ -308,11 +311,11 @@ class GPT(nn.Module):
             sequences = sequences[:, -self.config.block_size :]
 
             # inference the model in batches
-            batch_size = 500
+            batch_size = 8
             logits, _ = self(sequences[:batch_size])
             for j in range(batch_size, len(sequences), batch_size):
                 new_logits, _ = self(sequences[j : j + batch_size])
-                logits = torch.cat(tensors=(new_logits, logits), dim=1)
+                logits = torch.cat(tensors=(new_logits, logits), dim=0)
             logits = logits.squeeze(1)
 
             # take N most probable next tokens for each sequence
