@@ -21,7 +21,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from transformers import PreTrainedTokenizerFast
-from typing import Callable
+from typing import Callable, Optional
 
 
 class LayerNorm(nn.Module):
@@ -281,7 +281,7 @@ class GPT(nn.Module):
         topn: int = 100,
         pruning_ratio: float = 4,
         pruning_offset: float = 5,
-        log_file: str | None = None,
+        log_file: Optional[str] = None,
         on_iteration: Callable = None,
     ) -> torch.Tensor:
         if topn <= 0:
@@ -419,7 +419,7 @@ class GPT(nn.Module):
         path: str,
         return_train_params: bool = False,
         device: str = "cpu",
-        tokenizer_path: str | None = None,
+        tokenizer_path: Optional[str] = None,
     ):
         checkpoint = torch.load(path, map_location=device, weights_only=True)
 

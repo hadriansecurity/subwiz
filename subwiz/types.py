@@ -1,5 +1,6 @@
 import argparse
 import os
+from typing import Optional
 
 import tldextract
 import torch
@@ -83,7 +84,7 @@ def input_domains_type(value: list[str]) -> list[Domain]:
     return domains
 
 
-def output_file_type(value: str | os.PathLike | None) -> os.PathLike | None:
+def output_file_type(value: Optional[str, os.PathLike]) -> Optional[os.PathLike]:
     if value is None:
         return value
 
