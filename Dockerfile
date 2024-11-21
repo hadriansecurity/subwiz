@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy the requirements file first (if it exists) and install dependencies
 COPY requirements.txt .
-copy subwiz.py .
+COPY subwiz.py .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
