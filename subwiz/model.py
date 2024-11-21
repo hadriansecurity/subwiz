@@ -1,5 +1,7 @@
 """
 This code is largely copied from the nanogpt repository by Andrej Karpathy.
+The generate method has been modified to output many sequences.
+
 https://github.com/karpathy/nanoGPT
 
 Full definition of a GPT Language Model, all of it in this single file.

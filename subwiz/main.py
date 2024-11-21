@@ -11,7 +11,7 @@ from transformers import PreTrainedTokenizerFast
 
 from subwiz.model import GPT
 from subwiz.resolve import is_registered_bulk
-from subwiz.types import (
+from subwiz.type import (
     Domain,
     input_domains_type,
     device_type,

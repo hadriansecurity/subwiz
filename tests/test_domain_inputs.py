@@ -1,7 +1,7 @@
 from argparse import ArgumentTypeError
 import os
 
-from subwiz.types import input_domains_file_type
+from subwiz.type import input_domains_file_type
 
 
 def test_file_doesnt_exist():
