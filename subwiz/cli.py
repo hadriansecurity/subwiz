@@ -5,7 +5,7 @@ from subwiz.main import (
     run_inference,
     run_resolution,
 )
-from subwiz.types import (
+from subwiz.type import (
     device_type,
     input_domains_file_type,
     output_file_type,
