@@ -93,4 +93,4 @@ Subwiz predicts the N most likely sequences using a beam search algorithm.
 
 ![Diagram of the inference algorithm](https://raw.githubusercontent.com/hadriansecurity/subwiz/main/subwiz_inference.png)
 
-*Beam algorithm to predict the N most likely outputs from a generative transformer model.*
+*Beam search algorithm to predict the N most likely sequences using a generative transformer model.*
