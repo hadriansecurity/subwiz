@@ -9,9 +9,32 @@
 
 A recon tool that uses AI to predict subdomains. Then returns those that resolve.
 
+Here’s a more detailed and polished explanation for the installation instructions:
+
+---
+
 ### Installation
 
-```pip install subwiz```
+#### **1. Install from PyPI**
+```bash
+pip install subwiz
+```
+---
+
+#### **2. Install from Source**
+```
+git clone https://github.com/hadriansecurity/subwiz.git
+cd subwiz
+python3 setup.py install
+```
+---
+
+### **3. Install with Pipx** (Recommended for Isolation)
+Quick setup in isolated python environment using [pipx](https://pypa.github.io/pipx/)
+```bash
+pipx install --force git+https://github.com/hadriansecurity/subwiz.git
+```
+---
 
 ### Recommended Use
 
