@@ -1,3 +1,5 @@
+""" Exposes a command line interface that runs subwiz and returns the result. """
+
 import argparse
 
 from subwiz.main import (
@@ -15,7 +17,6 @@ from subwiz.type import (
 
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-# parser.print_usage = parser.print_help
 parser.add_argument(
     "-i",
     "--input-file",

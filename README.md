@@ -11,6 +11,10 @@ A recon tool that uses AI to predict subdomains. Then returns those that resolve
 
 ### Installation
 
+```pipx install subwiz```
+
+OR
+
 ```pip install subwiz```
 
 ### Recommended Use
@@ -60,7 +64,7 @@ options:
 
 ### In Python
 
-Use subwiz in Python, with the same inputs as the command line interface.
+Use subwiz in Python, with the same parameters as the command line interface.
 
 ```
 import subwiz
