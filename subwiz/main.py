@@ -28,8 +28,8 @@ CONFIG_FILE = "config.json"
 
 
 def download_files(force_download: bool) -> tuple[str, str]:
-    """ Download files from HuggingFace to run subwiz. Caches in local file system. """
-    
+    """Download files from HuggingFace to run subwiz. Caches in local file system."""
+
     model_path = hf_hub_download(
         repo_id=MODEL_REPO, filename=MODEL_FILE, force_download=force_download
     )
@@ -52,7 +52,7 @@ def run_inference(
     temperature: float,
     on_inference_iteration: Callable = None,
 ) -> list[str]:
-    """ Load model, preprocess inputs, tokenize text, run inference and decode tokens back to text. """
+    """Load model, preprocess inputs, tokenize text, run inference and decode tokens back to text."""
 
     gpt_model = GPT.from_checkpoint(
         model_path, device=device, tokenizer_path=tokenizer_path
@@ -89,8 +89,8 @@ def run_inference(
 
 
 def run_resolution(predictions: list[str], resolution_lim: int):
-    """ Check whether predictions resolve. """
-    
+    """Check whether predictions resolve."""
+
     registered_domains = asyncio.run(is_registered_bulk(predictions, resolution_lim))
     return registered_domains
 
@@ -105,7 +105,7 @@ def run(
     no_resolve: bool = False,
     force_download: bool = False,
 ) -> list[str]:
-    """ Process inputs, download model, run inference, check if predictions resolve and return hits. """
+    """Process inputs, download model, run inference, check if predictions resolve and return hits."""
 
     input_domains = input_domains_type(input_domains)
     device = device_type(device)

@@ -286,8 +286,8 @@ class GPT(nn.Module):
         log_file: Optional[str] = None,
         on_iteration: Callable = None,
     ) -> torch.Tensor:
-        """ Custom generate function that outputs topn sequences, different to the original nanoGPT implementation."""
-        
+        """Custom generate function that outputs topn sequences, different to the original nanoGPT implementation."""
+
         if topn <= 0:
             raise ValueError("topn should be greater than 0")
 
