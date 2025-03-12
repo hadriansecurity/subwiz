@@ -1,4 +1,4 @@
-""" Exposes a command line interface that runs subwiz and returns the result. """
+"""Exposes a command line interface that runs subwiz and returns the result."""
 
 import argparse
 
