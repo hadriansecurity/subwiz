@@ -24,7 +24,7 @@ jobs:
           cache: 'pip'
 
       - name: Install Packages
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-cpu.txt
 
       - name: Run Tests
         run: pytest --verbose
