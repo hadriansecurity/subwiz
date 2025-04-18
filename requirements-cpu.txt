@@ -3,5 +3,5 @@ huggingface-hub>=0.5.0
 pydantic>=1.10.0
 pytest>=8.0.0
 tldextract>=3.0.0
-torch>=2.3.0+cpu
+torch==2.3.0+cpu
 transformers>=4.34.0 
