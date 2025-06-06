@@ -1,6 +1,8 @@
+# ==> subwiz/cli.py <==
 """Exposes a command line interface that runs subwiz and returns the result."""
 
 import argparse
+from collections import defaultdict
 
 from subwiz.main import (
     download_files,
@@ -8,6 +10,7 @@ from subwiz.main import (
     run_resolution,
 )
 from subwiz.type import (
+    Domain,
     device_type,
     input_domains_file_type,
     output_file_type,
@@ -84,6 +87,12 @@ parser.add_argument(
     default=128,
     type=positive_int_type,
 )
+parser.add_argument(
+    "--multi-apex",
+    help="allow multiple apex domains in the input file. runs inference for each apex separately.",
+    dest="multi_apex",
+    action="store_true",
+)
 args = parser.parse_args()
 
 
@@ -100,8 +109,8 @@ class bcolors:
 
 
 hello_message = """
-███████╗██╗   ██╗██████╗     ██╗    ██╗██╗███████╗
-██╔════╝██║   ██║██╔══██╗    ██║    ██║██║╚══███╔╝
+███████╗██╗   ██╗██████╗     ██╗   ██╗██╗███████╗
+██╔════╝██║   ██║██╔══██╗    ██║   ██║██║╚══███╔╝
 ███████╗██║   ██║██████╔╝    ██║ █╗ ██║██║  ███╔╝ 
 ╚════██║██║   ██║██╔══██╗    ██║███╗██║██║ ███╔╝  
 ███████║╚██████╔╝██████╔╝    ╚███╔███╔╝██║███████╗
@@ -123,26 +132,47 @@ def print_progress_dot():
 def main():
     print_hello()
 
-    model_path, tokenizer_path = download_files(force_download=args.force_download)
+    # 1. Group the input domains by their apex
+    domain_objects: list[Domain] = args.input_file
+    domain_groups = defaultdict(list)
+    for dom in domain_objects:
+        domain_groups[dom.apex_domain].append(dom)
 
-    print_log("running inference", end="")
-    predictions = run_inference(
-        input_domains=args.input_file,
-        device=args.device,
-        model_path=model_path,
-        tokenizer_path=tokenizer_path,
-        num_predictions=args.num_predictions,
-        max_new_tokens=args.max_new_tokens,
-        temperature=args.temperature,
-        on_inference_iteration=print_progress_dot,
-    )
-    print_log("")  # end line
+    # 2. Check for multiple apex domains IF the flag isn't set
+    if len(domain_groups) > 1 and not args.multi_apex:
+        parser.error(
+            f"multiple apex domains found: {sorted(domain_groups.keys())}. "
+            "Use the --multi-apex flag to process them all."
+        )
+
+    # 3. Download files once
+    model_path, tokenizer_path = download_files(force_download=args.force_download)
+    all_predictions = set()
+
+    # 4. Loop through each group and run inference
+    for apex, domains_in_group in domain_groups.items():
+        print_log(f"[*] running inference for {apex}", end="")
+
+        predictions = run_inference(
+            input_domains=domains_in_group,
+            device=args.device,
+            model_path=model_path,
+            tokenizer_path=tokenizer_path,
+            num_predictions=args.num_predictions,
+            max_new_tokens=args.max_new_tokens,
+            temperature=args.temperature,
+            on_inference_iteration=print_progress_dot,
+        )
+        print_log("")  # end line after progress dots
+        all_predictions.update(predictions)
+
+    final_predictions = sorted(list(all_predictions))
 
     if not args.no_resolve:
         print_log("resolving subdomains...")
-        predictions = run_resolution(predictions, resolution_lim=args.resolution_lim)
+        final_predictions = run_resolution(final_predictions, resolution_lim=args.resolution_lim)
 
-    output = "\n".join(sorted(predictions))
+    output = "\n".join(sorted(final_predictions))
 
     if args.output_file:
         with open(args.output_file, "w") as f:
@@ -153,3 +183,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

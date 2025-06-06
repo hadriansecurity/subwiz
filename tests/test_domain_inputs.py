@@ -2,6 +2,7 @@ from argparse import ArgumentTypeError
 import os
 
 from subwiz.type import input_domains_file_type
+from subwiz.main import run
 
 
 def test_file_doesnt_exist():
@@ -44,3 +45,24 @@ def test_non_domain_file():
     except ArgumentTypeError:
         os.remove(test_file_name)
         pass
+
+
+def test_multi_apex():
+    test_file_name = ".test_multi_apex.txt"
+    multi_apex_domains = ["wfs.preprod.onmicrosoft.com", "loki-elk.staging.msft.ai", "fax-and-scan.staging.onmicrosoft.com"]
+    with open(test_file_name, "w") as f:
+        f.write("\n".join(multi_apex_domains))
+
+    try:
+        run(input_domains=multi_apex_domains, no_resolve=True, multi_apex=False)
+        assert False, "Should have failed without --multi-apex flag"
+    except argparse.ArgumentTypeError:
+        pass
+
+    try:
+        results = run(input_domains=multi_apex_domains, no_resolve=True, multi_apex=True, num_predictions=5)
+        assert isinstance(results, list)
+    except Exception as e:
+        assert False, f"Multi-apex run failed with an exception: {e}"
+
+    os.remove(test_file_name)

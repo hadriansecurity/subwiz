@@ -1,3 +1,4 @@
+# ==> subwiz/type.py <==
 import argparse
 import os
 from typing import Optional, Union
@@ -68,12 +69,6 @@ def input_domains_type(value: list[str]) -> list[Domain]:
     if invalid_domains:
         raise argparse.ArgumentTypeError(
             f"invalid input domains: {sorted(invalid_domains)}"
-        )
-
-    apex_domains = sorted({dom.apex_domain for dom in domains})
-    if len(apex_domains) != 1:
-        raise argparse.ArgumentTypeError(
-            f"all input domains must have same apex. found: {apex_domains}"
         )
 
     if not any(dom.subdomain for dom in domains):
