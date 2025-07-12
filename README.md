@@ -33,7 +33,7 @@ Seed subwiz with these subdomains:
 usage: cli.py [-h] -i INPUT_FILE [-o OUTPUT_FILE] [-n NUM_PREDICTIONS]
               [--no-resolve] [--force-download] [-t TEMPERATURE]
               [-d {auto,cpu,cuda,mps}] [-q MAX_NEW_TOKENS]
-              [--resolution_concurrency RESOLUTION_LIM]
+              [--resolution_concurrency RESOLUTION_LIM] [--multi-apex]
 
 options:
   -h, --help            show this help message and exit
@@ -59,6 +59,7 @@ options:
                         (default: 10)
   --resolution_concurrency RESOLUTION_LIM
                         number of concurrent resolutions. (default: 128)
+  --multi-apex          allow multiple apex domains in the input file. runs inference for each apex separately. (default: False)
 
 ```
 

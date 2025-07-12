@@ -1,4 +1,4 @@
-from argparse import ArgumentTypeError
+import argparse
 import os
 
 from subwiz.type import input_domains_file_type
@@ -9,7 +9,7 @@ def test_file_doesnt_exist():
     try:
         input_domains_file_type("nonexistent_file.txt")
         assert False
-    except ArgumentTypeError:
+    except argparse.ArgumentTypeError:
         pass
 
 
@@ -29,7 +29,7 @@ def test_empty_file():
         input_domains_file_type(test_file_name)
         os.remove(test_file_name)
         assert False
-    except ArgumentTypeError:
+    except argparse.ArgumentTypeError:
         os.remove(test_file_name)
         pass
 
@@ -42,7 +42,7 @@ def test_non_domain_file():
         input_domains_file_type(test_file_name)
         os.remove(test_file_name)
         assert False
-    except ArgumentTypeError:
+    except argparse.ArgumentTypeError:
         os.remove(test_file_name)
         pass
 
