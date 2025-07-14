@@ -49,7 +49,12 @@ def test_non_domain_file():
 
 def test_multi_apex():
     test_file_name = ".test_multi_apex.txt"
-    multi_apex_domains = ["wfs.preprod.onmicrosoft.com", "loki-elk.staging.msft.ai", "fax-and-scan.staging.onmicrosoft.com"]
+    multi_apex_domains = [
+        "wfs.preprod.onmicrosoft.com",
+        "loki-elk.staging.msft.ai",
+        "fax-and-scan.staging.onmicrosoft.com",
+    ]
+
     with open(test_file_name, "w") as f:
         f.write("\n".join(multi_apex_domains))
 
@@ -60,7 +65,12 @@ def test_multi_apex():
         pass
 
     try:
-        results = run(input_domains=multi_apex_domains, no_resolve=True, multi_apex=True, num_predictions=5)
+        results = run(
+            input_domains=multi_apex_domains,
+            no_resolve=True,
+            multi_apex=True,
+            num_predictions=5,
+        )
         assert isinstance(results, list)
     except Exception as e:
         assert False, f"Multi-apex run failed with an exception: {e}"

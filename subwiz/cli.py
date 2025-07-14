@@ -109,8 +109,8 @@ class bcolors:
 
 
 hello_message = """
-███████╗██╗   ██╗██████╗     ██╗   ██╗██╗███████╗
-██╔════╝██║   ██║██╔══██╗    ██║   ██║██║╚══███╔╝
+███████╗██╗   ██╗██████╗     ██╗    ██╗██╗███████╗
+██╔════╝██║   ██║██╔══██╗    ██║    ██║██║╚══███╔╝
 ███████╗██║   ██║██████╔╝    ██║ █╗ ██║██║  ███╔╝ 
 ╚════██║██║   ██║██╔══██╗    ██║███╗██║██║ ███╔╝  
 ███████║╚██████╔╝██████╔╝    ╚███╔███╔╝██║███████╗
@@ -170,7 +170,9 @@ def main():
 
     if not args.no_resolve:
         print_log("resolving subdomains...")
-        final_predictions = run_resolution(final_predictions, resolution_lim=args.resolution_lim)
+        final_predictions = run_resolution(
+            final_predictions, resolution_lim=args.resolution_lim
+        )
 
     output = "\n".join(sorted(final_predictions))
 
@@ -183,4 +185,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

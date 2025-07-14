@@ -149,4 +149,3 @@ def run(
         sorted(list(all_predictions)), resolution_lim=resolution_concurrency
     )
     return resolving_predictions
-
