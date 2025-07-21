@@ -16,12 +16,7 @@ from subwiz.type import (
     temperature_type,
 )
 
-if not sys.stdout.isatty():
-    formatter_class = argparse.HelpFormatter  # Fixed width
-else:
-    formatter_class = argparse.ArgumentDefaultsHelpFormatter  # Dynamic width [3/4]
-
-parser = argparse.ArgumentParser(formatter_class=formatter_class)
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(
     "-i",
     "--input-file",
