@@ -1,7 +1,6 @@
 """Exposes a command line interface that runs subwiz and returns the result."""
 
 import argparse
-import sys
 
 from subwiz.main import (
     download_files,
@@ -15,6 +14,7 @@ from subwiz.type import (
     positive_int_type,
     temperature_type,
 )
+
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(
