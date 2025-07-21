@@ -54,7 +54,6 @@ options:
                         number of concurrent resolutions. (default: 128)
   --multi-apex          allow multiple apex domains in the input file. runs inference for each
                         apex separately. (default: False)
-
 ```
 
 ### In Python
