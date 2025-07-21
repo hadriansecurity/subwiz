@@ -30,8 +30,9 @@ Seed subwiz with these subdomains:
 ### Supported Switches
 
 ```commandline
-usage: cli.py [-h] -i INPUT_FILE [-o OUTPUT_FILE] [-n NUM_PREDICTIONS] [--no-resolve] [--force-download] [-t TEMPERATURE] [-d {auto,cpu,cuda,mps}]
-              [-q MAX_NEW_TOKENS] [--resolution_concurrency RESOLUTION_LIM] [--multi-apex]
+usage: cli.py [-h] -i INPUT_FILE [-o OUTPUT_FILE] [-n NUM_PREDICTIONS] [--no-resolve]
+              [--force-download] [-t TEMPERATURE] [-d {auto,cpu,cuda,mps}] [-q MAX_NEW_TOKENS]
+              [--resolution_concurrency RESOLUTION_LIM]
 
 options:
   -h, --help            show this help message and exit
