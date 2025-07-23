@@ -2,13 +2,8 @@
 """Exposes a command line interface that runs subwiz and returns the result."""
 
 import argparse
-from collections import defaultdict
 
-from subwiz.main import (
-    download_files,
-    run_inference,
-    run_resolution,
-)
+from subwiz.main import run
 from subwiz.type import (
     Domain,
     device_type,
@@ -132,55 +127,32 @@ def print_progress_dot():
 def main():
     print_hello()
 
-    # 1. Group the input domains by their apex
-    domain_objects: list[Domain] = args.input_file
-    domain_groups = defaultdict(list)
-    for dom in domain_objects:
-        domain_groups[dom.apex_domain].append(dom)
-
-    # 2. Check for multiple apex domains IF the flag isn't set
-    if len(domain_groups) > 1 and not args.multi_apex:
-        parser.error(
-            f"multiple apex domains found: {sorted(domain_groups.keys())}. "
-            "Use the --multi-apex flag to process them all."
-        )
-
-    # 3. Download files once
-    model_path, tokenizer_path = download_files(force_download=args.force_download)
-    all_predictions = set()
-
-    # 4. Loop through each group and run inference
-    for apex, domains_in_group in domain_groups.items():
-        print_log(f"[*] running inference for {apex}", end="")
-
-        predictions = run_inference(
-            input_domains=domains_in_group,
+    try:
+        domain_objects: list[Domain] = args.input_file
+        input_domains = [str(dom) for dom in domain_objects]
+        
+        results = run(
+            input_domains=input_domains,
             device=args.device,
-            model_path=model_path,
-            tokenizer_path=tokenizer_path,
             num_predictions=args.num_predictions,
             max_new_tokens=args.max_new_tokens,
             temperature=args.temperature,
-            on_inference_iteration=print_progress_dot,
+            resolution_concurrency=args.resolution_lim,
+            no_resolve=args.no_resolve,
+            force_download=args.force_download,
+            multi_apex=args.multi_apex,
         )
-        print_log("")  # end line after progress dots
-        all_predictions.update(predictions)
-
-    final_predictions = sorted(list(all_predictions))
-
-    if not args.no_resolve:
-        print_log("resolving subdomains...")
-        final_predictions = run_resolution(
-            final_predictions, resolution_lim=args.resolution_lim
-        )
-
-    output = "\n".join(sorted(final_predictions))
-
-    if args.output_file:
-        with open(args.output_file, "w") as f:
-            f.write(output)
-    else:
-        print(output)
+        
+        output = "\n".join(sorted(results))
+        
+        if args.output_file:
+            with open(args.output_file, "w") as f:
+                f.write(output)
+        else:
+            print(output)
+            
+    except argparse.ArgumentTypeError as e:
+        parser.error(str(e))
 
 
 if __name__ == "__main__":
