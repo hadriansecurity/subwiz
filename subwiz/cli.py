@@ -130,7 +130,7 @@ def main():
     try:
         domain_objects: list[Domain] = args.input_file
         input_domains = [str(dom) for dom in domain_objects]
-        
+
         results = run(
             input_domains=input_domains,
             device=args.device,
@@ -142,15 +142,15 @@ def main():
             force_download=args.force_download,
             multi_apex=args.multi_apex,
         )
-        
+
         output = "\n".join(sorted(results))
-        
+
         if args.output_file:
             with open(args.output_file, "w") as f:
                 f.write(output)
         else:
             print(output)
-            
+
     except argparse.ArgumentTypeError as e:
         parser.error(str(e))
 
