@@ -9,6 +9,7 @@ from huggingface_hub import hf_hub_download
 import torch
 from transformers import PreTrainedTokenizerFast
 
+from subwiz.cli_printer import print_hello, print_log, print_progress_dot
 from subwiz.model import GPT
 from subwiz.resolve import is_registered_bulk
 from subwiz.type import (
@@ -105,8 +106,11 @@ def run(
     no_resolve: bool = False,
     force_download: bool = False,
     multi_apex: bool = False,
+    print_cli_progress: bool = False,
 ) -> list[str]:
     """Process inputs, download model, run inference, check if predictions resolve and return hits."""
+    if print_cli_progress:
+        print_hello()
 
     domain_objects = input_domains_type(input_domains)
     device = device_type(device)
@@ -130,7 +134,13 @@ def run(
     all_predictions = set()
 
     for apex, domains_in_group in domain_groups.items():
-        print(f"[*] Processing apex domain: {apex}")
+
+        on_inference_iteration = None
+        if print_cli_progress:
+            on_inference_iteration = print_progress_dot
+            log = f"running inference for {apex}" if multi_apex else "running inference"
+            print_log(log, end="")
+
         predictions = run_inference(
             input_domains=domains_in_group,
             device=device,
@@ -139,7 +149,9 @@ def run(
             num_predictions=num_predictions,
             max_new_tokens=max_new_tokens,
             temperature=temperature,
+            on_inference_iteration=on_inference_iteration,
         )
+        print_log("", end="\n")
         all_predictions.update(predictions)
 
     if no_resolve:

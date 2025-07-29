@@ -1,4 +1,3 @@
-# ==> subwiz/type.py <==
 import argparse
 import os
 from typing import Optional, Union
