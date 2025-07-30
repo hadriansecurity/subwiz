@@ -2,13 +2,14 @@ import argparse
 import asyncio
 import os
 import re
+from collections import defaultdict
 from typing import Callable
 
 from huggingface_hub import hf_hub_download
-import tldextract
 import torch
 from transformers import PreTrainedTokenizerFast
 
+from subwiz.cli_printer import print_hello, print_log, print_progress_dot
 from subwiz.model import GPT
 from subwiz.resolve import is_registered_bulk
 from subwiz.type import (
@@ -104,32 +105,59 @@ def run(
     resolution_concurrency: int = 128,
     no_resolve: bool = False,
     force_download: bool = False,
+    multi_apex: bool = False,
+    print_cli_progress: bool = False,
 ) -> list[str]:
     """Process inputs, download model, run inference, check if predictions resolve and return hits."""
+    if print_cli_progress:
+        print_hello()
 
-    input_domains = input_domains_type(input_domains)
+    domain_objects = input_domains_type(input_domains)
     device = device_type(device)
     num_predictions = positive_int_type(num_predictions)
     max_new_tokens = positive_int_type(max_new_tokens)
     temperature = temperature_type(temperature)
     resolution_concurrency = concurrency_type(resolution_concurrency)
 
+    domain_groups = defaultdict(list)
+    for dom in domain_objects:
+        domain_groups[dom.apex_domain].append(dom)
+
+    if len(domain_groups) > 1 and not multi_apex:
+        raise argparse.ArgumentTypeError(
+            f"multiple apex domains found: {sorted(domain_groups.keys())}. "
+            "Use the --multi-apex flag to process them all."
+        )
+
     model_path, tokenizer_path = download_files(force_download)
 
-    predictions = run_inference(
-        input_domains=input_domains,
-        device=device,
-        model_path=model_path,
-        tokenizer_path=tokenizer_path,
-        num_predictions=num_predictions,
-        max_new_tokens=max_new_tokens,
-        temperature=temperature,
-    )
+    all_predictions = set()
+
+    for apex, domains_in_group in domain_groups.items():
+
+        on_inference_iteration = None
+        if print_cli_progress:
+            on_inference_iteration = print_progress_dot
+            log = f"running inference for {apex}" if multi_apex else "running inference"
+            print_log(log, end="")
+
+        predictions = run_inference(
+            input_domains=domains_in_group,
+            device=device,
+            model_path=model_path,
+            tokenizer_path=tokenizer_path,
+            num_predictions=num_predictions,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            on_inference_iteration=on_inference_iteration,
+        )
+        print_log("", end="\n")
+        all_predictions.update(predictions)
 
     if no_resolve:
-        return predictions
+        return sorted(list(all_predictions))
 
     resolving_predictions = run_resolution(
-        predictions, resolution_lim=resolution_concurrency
+        sorted(list(all_predictions)), resolution_lim=resolution_concurrency
     )
     return resolving_predictions

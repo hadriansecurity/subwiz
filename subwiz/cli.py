@@ -2,12 +2,9 @@
 
 import argparse
 
-from subwiz.main import (
-    download_files,
-    run_inference,
-    run_resolution,
-)
+from subwiz.main import run
 from subwiz.type import (
+    Domain,
     device_type,
     input_domains_file_type,
     output_file_type,
@@ -84,71 +81,43 @@ parser.add_argument(
     default=128,
     type=positive_int_type,
 )
+parser.add_argument(
+    "--multi-apex",
+    help="allow multiple apex domains in the input file. runs inference for each apex separately.",
+    dest="multi_apex",
+    action="store_true",
+)
 args = parser.parse_args()
 
 
-class bcolors:
-    HEADER = "\033[95m"
-    OKBLUE = "\033[94m"
-    OKCYAN = "\033[96m"
-    OKGREEN = "\033[92m"
-    WARNING = "\033[93m"
-    FAIL = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
-
-
-hello_message = """
-███████╗██╗   ██╗██████╗     ██╗    ██╗██╗███████╗
-██╔════╝██║   ██║██╔══██╗    ██║    ██║██║╚══███╔╝
-███████╗██║   ██║██████╔╝    ██║ █╗ ██║██║  ███╔╝ 
-╚════██║██║   ██║██╔══██╗    ██║███╗██║██║ ███╔╝  
-███████║╚██████╔╝██████╔╝    ╚███╔███╔╝██║███████╗
-╚══════╝ ╚═════╝ ╚═════╝      ╚══╝╚══╝ ╚═╝╚══════╝"""
-
-
-def print_hello():
-    print(f"{bcolors.OKGREEN}{hello_message}{bcolors.ENDC}", flush=True)
-
-
-def print_log(msg: str, end="\n"):
-    print(f"{bcolors.OKCYAN}{msg}{bcolors.ENDC}", flush=True, end=end)
-
-
-def print_progress_dot():
-    print_log(".", end="")
-
-
 def main():
-    print_hello()
+    try:
+        domain_objects: list[Domain] = args.input_file
+        input_domains = [str(dom) for dom in domain_objects]
 
-    model_path, tokenizer_path = download_files(force_download=args.force_download)
+        results = run(
+            input_domains=input_domains,
+            device=args.device,
+            num_predictions=args.num_predictions,
+            max_new_tokens=args.max_new_tokens,
+            temperature=args.temperature,
+            resolution_concurrency=args.resolution_lim,
+            no_resolve=args.no_resolve,
+            force_download=args.force_download,
+            multi_apex=args.multi_apex,
+            print_cli_progress=True,
+        )
 
-    print_log("running inference", end="")
-    predictions = run_inference(
-        input_domains=args.input_file,
-        device=args.device,
-        model_path=model_path,
-        tokenizer_path=tokenizer_path,
-        num_predictions=args.num_predictions,
-        max_new_tokens=args.max_new_tokens,
-        temperature=args.temperature,
-        on_inference_iteration=print_progress_dot,
-    )
-    print_log("")  # end line
+        output = "\n".join(sorted(results))
 
-    if not args.no_resolve:
-        print_log("resolving subdomains...")
-        predictions = run_resolution(predictions, resolution_lim=args.resolution_lim)
+        if args.output_file:
+            with open(args.output_file, "w") as f:
+                f.write(output)
+        else:
+            print(output)
 
-    output = "\n".join(sorted(predictions))
-
-    if args.output_file:
-        with open(args.output_file, "w") as f:
-            f.write(output)
-    else:
-        print(output)
+    except argparse.ArgumentTypeError as e:
+        parser.error(str(e))
 
 
 if __name__ == "__main__":
