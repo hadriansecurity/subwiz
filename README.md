@@ -7,7 +7,7 @@
 ╚══════╝ ╚═════╝ ╚═════╝      ╚══╝╚══╝ ╚═╝╚══════╝
 </pre>
 
-A recon tool that uses AI to predict subdomains. Then returns those that resolve.
+A lightweight GPT model, trained to discover subdomains.
 
 ### Installation
 
