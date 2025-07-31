@@ -120,7 +120,7 @@ def _get_domains_for_group(
     all_predictions_that_resolve = set()
     apex = next(iter(domains_in_group)).apex_domain
 
-    max_recursion_iters = 1 if no_recursion else 20
+    max_recursion_iters = 1 if no_recursion else 10
     for i in range(max_recursion_iters):
 
         on_inference_iteration = None
