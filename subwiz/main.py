@@ -66,8 +66,7 @@ def run_inference(
     """Preprocess inputs, tokenize text, run inference and decode tokens back to text."""
 
     subs = [dom.subdomain for dom in input_domains]
-    subs.sort()
-    tokenizer_input = ",".join(subs) + "[DELIM]"
+    tokenizer_input = ",".join(sorted(subs)) + "[DELIM]"
 
     x = tokenizer.encode(tokenizer_input)
     x = [1] * (gpt_model.config.block_size - len(x)) + x
