@@ -95,10 +95,12 @@ def run_inference(
     return predictions
 
 
-def run_resolution(predictions: set[str], resolution_lim: int) -> set[str]:
+def run_resolution(predictions: set[str], resolution_concurrency: int) -> set[str]:
     """Check whether predictions resolve."""
 
-    registered_domains = asyncio.run(is_registered_bulk(predictions, resolution_lim))
+    registered_domains = asyncio.run(
+        is_registered_bulk(predictions, resolution_concurrency)
+    )
     return registered_domains
 
 
@@ -112,7 +114,7 @@ def _get_domains_for_group(
     temperature: float,
     no_recursion: bool,
     no_resolve: bool,
-    resolution_lim: int,
+    resolution_concurrency: int,
     print_cli_progress: bool,
 ) -> set[str]:
     """For a group of subdomains that share an apex: run inference and check if they resolve, recursively."""
@@ -147,7 +149,7 @@ def _get_domains_for_group(
             print_log("", end="\n")
             return predictions
 
-        predictions_that_resolve = run_resolution(predictions, resolution_lim)
+        predictions_that_resolve = run_resolution(predictions, resolution_concurrency)
         end_log = "" if no_recursion else "done"
         print_log(end_log, end="\n")
 
@@ -166,7 +168,7 @@ def run(
     num_predictions: int = 500,
     max_new_tokens: int = 10,
     temperature: float = 0,
-    resolution_lim: int = 128,
+    resolution_concurrency: int = 128,
     no_resolve: bool = False,
     force_download: bool = False,
     multi_apex: bool = False,
@@ -182,7 +184,7 @@ def run(
     num_predictions = positive_int_type(num_predictions)
     max_new_tokens = positive_int_type(max_new_tokens)
     temperature = temperature_type(temperature)
-    resolution_lim = concurrency_type(resolution_lim)
+    resolution_concurrency = concurrency_type(resolution_concurrency)
 
     domain_groups = defaultdict(set)
     for dom in domain_objects:
@@ -208,7 +210,7 @@ def run(
             temperature=temperature,
             no_recursion=no_recursion,
             no_resolve=no_resolve,
-            resolution_lim=resolution_lim,
+            resolution_concurrency=resolution_concurrency,
             print_cli_progress=print_cli_progress,
         )
 

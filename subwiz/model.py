@@ -285,6 +285,7 @@ class GPT(nn.Module):
         pruning_offset: float = 5,
         log_file: Optional[str] = None,
         on_iteration: Callable = None,
+        blocked_sequences: torch.Tensor = None,  # TODO: never generate these sequences
     ) -> torch.Tensor:
         """Custom generate function that outputs topn sequences, different to the original nanoGPT implementation."""
 
@@ -329,6 +330,9 @@ class GPT(nn.Module):
             # remove finished sequences (after end token) and cache their probs
             if i > 0:
                 # feature to add: we should not add subdomain in input to the finished sequences
+                # TODO: do not sample sequences that already existed last time (and solve the comment above)
+                # thinking: i need to make matrix that goes [... delim, delim, sequence] and then i need to do dot product
+                # and if the sum of each row adds up to i then it's an exact sequence match ahhhhh
                 comma_token_probs = new_sequence_probs[:, self.comma_token]
                 end_token_probs = new_sequence_probs[:, self.end_token]
                 _finish_probs = end_token_probs + comma_token_probs

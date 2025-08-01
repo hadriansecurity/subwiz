@@ -23,8 +23,10 @@ async def is_registered(
             return False
 
 
-async def is_registered_bulk(domains_to_check: set[str], limit: int) -> set[str]:
-    semaphore = asyncio.Semaphore(limit)
+async def is_registered_bulk(
+    domains_to_check: set[str], resolution_concurrency: int
+) -> set[str]:
+    semaphore = asyncio.Semaphore(resolution_concurrency)
     resolver = aiodns.DNSResolver(
         nameservers=NAME_SERVERS, timeout=TIMEOUT, tries=TRIES
     )

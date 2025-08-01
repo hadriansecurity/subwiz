@@ -84,7 +84,7 @@ parser.add_argument(
 parser.add_argument(
     "--resolution_concurrency",
     help="number of concurrent resolutions.",
-    dest="resolution_lim",
+    dest="resolution_concurrency",
     default=128,
     type=positive_int_type,
 )
