@@ -50,7 +50,6 @@ parser.add_argument(
     action="store_true",
 )
 parser.add_argument(
-    "-r",
     "--no_recursion",
     help="do not automatically re-run subwiz if it finds new subdomains.",
     dest="no_recursion",

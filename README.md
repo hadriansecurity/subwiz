@@ -31,8 +31,8 @@ Seed subwiz with these subdomains:
 
 ```commandline
 usage: cli.py [-h] -i INPUT_FILE [-o OUTPUT_FILE] [-n NUM_PREDICTIONS] [--no-resolve]
-              [--force-download] [-r] [-t TEMPERATURE] [-d {auto,cpu,cuda,mps}]
-              [-q MAX_NEW_TOKENS] [--resolution_concurrency RESOLUTION_LIM] [--multi-apex]
+              [--force-download] [--no_recursion] [-t TEMPERATURE] [-d {auto,cpu,cuda,mps}]
+              [-q MAX_NEW_TOKENS] [--resolution_concurrency RESOLUTION_CONCURRENCY] [--multi-apex]
 
 options:
   -h, --help            show this help message and exit
@@ -44,7 +44,7 @@ options:
                         number of subdomains to predict. (default: 500)
   --no-resolve          do not resolve the output subdomains. (default: False)
   --force-download      download model and tokenizer files, even if cached. (default: False)
-  -r, --no_recursion    do not automatically re-run subwiz if it finds new subdomains. (default:
+  --no_recursion        do not automatically re-run subwiz if it finds new subdomains. (default:
                         False)
   -t TEMPERATURE, --temperature TEMPERATURE
                         add randomness to the model (recommended ≤ 0.3). (default: 0.0)
@@ -52,7 +52,7 @@ options:
                         hardware to run the transformer model on. (default: auto)
   -q MAX_NEW_TOKENS, --max_new_tokens MAX_NEW_TOKENS
                         maximum length of predicted subdomains in tokens. (default: 10)
-  --resolution_concurrency RESOLUTION_LIM
+  --resolution_concurrency RESOLUTION_CONCURRENCY
                         number of concurrent resolutions. (default: 128)
   --multi-apex          allow multiple apex domains in the input file. runs inference for each
                         apex separately. (default: False)
