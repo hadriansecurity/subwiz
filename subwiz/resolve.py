@@ -11,11 +11,11 @@ DNS_RECORD = "A"
 
 
 async def is_registered(
-    permutation: str, resolver: aiodns.DNSResolver, semaphore: asyncio.Semaphore
+    domain: str, resolver: aiodns.DNSResolver, semaphore: asyncio.Semaphore
 ) -> bool:
     async with semaphore:
         try:
-            await resolver.query(permutation, DNS_RECORD)
+            await resolver.query(domain, DNS_RECORD)
             return True
         except idna.IDNAError:
             return False
@@ -23,16 +23,18 @@ async def is_registered(
             return False
 
 
-async def is_registered_bulk(domains_to_check: list[str], limit: int) -> list[str]:
-    semaphore = asyncio.Semaphore(limit)
+async def is_registered_bulk(
+    domains_to_check: set[str], resolution_concurrency: int
+) -> set[str]:
+    semaphore = asyncio.Semaphore(resolution_concurrency)
     resolver = aiodns.DNSResolver(
         nameservers=NAME_SERVERS, timeout=TIMEOUT, tries=TRIES
     )
 
     tasks = [is_registered(dom, resolver, semaphore) for dom in domains_to_check]
     results = await asyncio.gather(*tasks)
-    registered_domains = [
+    registered_domains = {
         dom for dom, is_reg in zip(domains_to_check, results) if is_reg
-    ]
+    }
 
     return registered_domains
