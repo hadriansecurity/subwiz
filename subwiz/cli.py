@@ -31,7 +31,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-n",
-    "--num_predictions",
+    "--num-predictions",
     help="number of subdomains to predict.",
     dest="num_predictions",
     default=500,
@@ -50,7 +50,7 @@ parser.add_argument(
     action="store_true",
 )
 parser.add_argument(
-    "--no_recursion",
+    "--no-recursion",
     help="do not automatically re-run subwiz if it finds new subdomains.",
     dest="no_recursion",
     action="store_true",
@@ -74,14 +74,14 @@ parser.add_argument(
 )
 parser.add_argument(
     "-q",
-    "--max_new_tokens",
+    "--max-new-tokens",
     help="maximum length of predicted subdomains in tokens.",
     dest="max_new_tokens",
     default=10,
     type=positive_int_type,
 )
 parser.add_argument(
-    "--resolution_concurrency",
+    "--resolution-concurrency",
     help="number of concurrent resolutions.",
     dest="resolution_concurrency",
     default=128,
