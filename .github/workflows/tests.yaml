@@ -24,7 +24,10 @@ jobs:
           cache: 'pip'
 
       - name: Install Packages
-        run: pip install -r requirements.txt
+        run: >
+          pip install -r requirements.txt
+          --index-url https://download.pytorch.org/whl/cpu 
+          --extra-index-url https://pypi.org/simple
 
       - name: Run Tests
         run: pytest --verbose
