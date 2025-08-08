@@ -165,7 +165,7 @@ def _get_domains_for_group(
             return predictions
 
         predictions_that_resolve = run_resolution(predictions, resolution_concurrency)
-        
+
         if print_cli_progress:
             if not max_recursion:
                 end_log = ""
@@ -173,7 +173,7 @@ def _get_domains_for_group(
                 printed_characters = len(apex) + dots_emitted + (0 if i == 0 else 3)
                 max_characters = max(len(a) for a in all_apexes) + max_new_tokens + 3
                 extra_spaces = max_characters - printed_characters
-                
+
                 sub_count = len(predictions_that_resolve)
                 subs_label = "subdomain" if sub_count == 1 else "subdomains"
                 end_log = " " * extra_spaces + f"found {sub_count} {subs_label}"
