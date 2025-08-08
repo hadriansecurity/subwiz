@@ -7,11 +7,11 @@ from subwiz.type import (
     Domain,
     device_type,
     input_domains_file_type,
+    max_recursion_type,
     output_file_type,
     positive_int_type,
     temperature_type,
 )
-
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(
@@ -50,10 +50,11 @@ parser.add_argument(
     action="store_true",
 )
 parser.add_argument(
-    "--no-recursion",
-    help="do not automatically re-run subwiz if it finds new subdomains.",
-    dest="no_recursion",
-    action="store_true",
+    "--max-recursion",
+    help="maximum number of times the inference process will recursively re-run after finding new subdomains.",
+    dest="max_recursion",
+    default=5,
+    type=max_recursion_type,
 )
 parser.add_argument(
     "-t",
@@ -104,8 +105,9 @@ def main():
         run_args = {
             k: v
             for k, v in args.__dict__.items()
-            if k not in {"input_file", "output_file"}
+            if k not in {"input_file", "output_file", "profile", "profile_output"}
         }
+
         results = run(
             **run_args,
             input_domains=input_domains,

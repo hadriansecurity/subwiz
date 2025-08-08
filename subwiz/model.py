@@ -170,6 +170,7 @@ class GPT(nn.Module):
         )
         self.end_token = self.tokenizer("[END]")["input_ids"][0]
         self.comma_token = self.tokenizer(",")["input_ids"][0]
+        self.delim_token = self.tokenizer("[DELIM]")["input_ids"][0]
 
         self.transformer = nn.ModuleDict(
             dict(
@@ -285,7 +286,7 @@ class GPT(nn.Module):
         pruning_offset: float = 5,
         log_file: Optional[str] = None,
         on_iteration: Callable = None,
-        blocked_sequences: torch.Tensor = None,  # TODO: never generate these sequences
+        blocked_outputs: set[str] = None,  # doesn't output these strings
     ) -> torch.Tensor:
         """Custom generate function that outputs topn sequences, different to the original nanoGPT implementation."""
 
@@ -315,6 +316,14 @@ class GPT(nn.Module):
             # trim the sequences down to block size
             sequences = sequences[:, -self.config.block_size :]
 
+            # remove any sequences with a double dot in them (invalid domain name)
+            outputs = self.tokenizer.batch_decode(sequences[:, - i:])
+            outputs = [b.replace(" ", "") for b in outputs]
+            double_dot_mask = torch.tensor([".." not in s for s in outputs])
+            sequences = sequences[double_dot_mask]
+            probabilities = probabilities[double_dot_mask]
+            outputs = [o for o in outputs if ".." not in o]
+
             # inference the model in batches
             batch_size = 8
             logits, _ = self(sequences[:batch_size])
@@ -329,22 +338,27 @@ class GPT(nn.Module):
 
             # remove finished sequences (after end token) and cache their probs
             if i > 0:
-                # feature to add: we should not add subdomain in input to the finished sequences
-                # TODO: do not sample sequences that already existed last time (and solve the comment above)
-                # thinking: i need to make matrix that goes [... delim, delim, sequence] and then i need to do dot product
-                # and if the sum of each row adds up to i then it's an exact sequence match ahhhhh
+                # likelihood of each sequence having an end or comma token next
                 comma_token_probs = new_sequence_probs[:, self.comma_token]
                 end_token_probs = new_sequence_probs[:, self.end_token]
                 _finish_probs = end_token_probs + comma_token_probs
+                _finished_sequences = sequences.clone().detach()
+                
+                # any sequences which decode to a blocked string are not outputted
+                if blocked_outputs is not None:
+                    blocked_sequences = torch.tensor([s not in blocked_outputs for s in outputs], device=self.device)
+                    _finish_probs = _finish_probs[blocked_sequences]
+                    _finished_sequences = _finished_sequences[blocked_sequences]
 
-                finished_sequences = torch.cat((finished_sequences, sequences))
+                # add all sequences to the finished_sequences with prob of ending
+                finished_sequences = torch.cat((finished_sequences, _finished_sequences))
                 finished_probs = torch.cat((finished_probs, _finish_probs), dim=-1)
 
             # remove sequences and tokens with a probability that is too low
             if len(finished_sequences) > topn:
                 # torch.kthvalue is not implemented on MPS, so we use topk
                 lowest_viable_probability = torch.topk(finished_probs, topn).values[-1]
-                viable_sequences = probabilities > lowest_viable_probability
+                viable_sequences = probabilities >= lowest_viable_probability
 
                 if viable_sequences.sum() == 0:
                     break
@@ -416,7 +430,9 @@ class GPT(nn.Module):
                     finished_probs=finished_probs,
                 )
 
-        # take the highest scoring sequences for the next iteration
+        if len(finished_sequences) <= topn:
+            return finished_sequences
+        
         _, final_indices = torch.topk(finished_probs, topn)
         final_sequences = finished_sequences[final_indices]
 

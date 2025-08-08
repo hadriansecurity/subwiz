@@ -16,6 +16,7 @@ from subwiz.type import (
     Domain,
     input_domains_type,
     device_type,
+    max_recursion_type,
     positive_int_type,
     temperature_type,
     concurrency_type,
@@ -61,16 +62,21 @@ def run_inference(
     num_predictions: int,
     max_new_tokens: int,
     temperature: float,
+    blocked_domains: set[str],
     on_inference_iteration: Callable = None,
 ) -> set[str]:
     """Preprocess inputs, tokenize text, run inference and decode tokens back to text."""
 
+    apex = next(iter(input_domains)).apex_domain
     subs = [dom.subdomain for dom in input_domains]
     tokenizer_input = ",".join(sorted(subs)) + "[DELIM]"
+    # TODO: pick a different subset, if some were out of context last iteration
 
     x = tokenizer.encode(tokenizer_input)
     x = [1] * (gpt_model.config.block_size - len(x)) + x
     x = torch.tensor(x)
+
+    blocked_outputs = {dom.subdomain for dom in blocked_domains}
 
     predictions = gpt_model.generate(
         x,
@@ -78,6 +84,7 @@ def run_inference(
         topn=num_predictions,
         on_iteration=on_inference_iteration,
         temperature=temperature,
+        blocked_outputs=blocked_outputs,
     )
     predictions = predictions.int().tolist()
 
@@ -85,11 +92,8 @@ def run_inference(
         tokenizer.decode(pred).replace(" ", "").rsplit("[DELIM]", 1)[1]
         for pred in predictions
     }
-    predictions = {
-        sub + "." + next(iter(input_domains)).apex_domain for sub in predictions
-    }
-    predictions = {re.sub(r"\.+", ".", dom) for dom in predictions}
-    predictions = predictions - {str(dom) for dom in input_domains}
+    
+    predictions = {sub + "." + apex for sub in predictions}
 
     return predictions
 
@@ -110,19 +114,20 @@ def _get_domains_for_group(
     multi_apex: bool,
     num_predictions: int,
     max_new_tokens: int,
+    max_recursion: int,
     temperature: float,
-    no_recursion: bool,
     no_resolve: bool,
     resolution_concurrency: int,
     print_cli_progress: bool,
 ) -> set[str]:
     """For a group of subdomains that share an apex: run inference and check if they resolve, recursively."""
-
-    all_predictions_that_resolve = set()
+    
+    blocked_domains: set[Domain] = domains_in_group.copy()
+    all_predictions_that_resolve: set[Domain] = set()
     apex = next(iter(domains_in_group)).apex_domain
 
-    max_recursion_iters = 1 if no_recursion else 10
-    for i in range(max_recursion_iters):
+    t = temperature
+    for i in range(max_recursion + 1):
 
         on_inference_iteration = None
         if print_cli_progress:
@@ -130,7 +135,7 @@ def _get_domains_for_group(
             log = "running inference"
             if multi_apex:
                 log += f" for {apex}"
-            if not no_recursion and i:
+            if i:
                 log += f" x{i + 1}"
             print_log(log, end="")
 
@@ -140,8 +145,9 @@ def _get_domains_for_group(
             tokenizer=tokenizer,
             num_predictions=num_predictions,
             max_new_tokens=max_new_tokens,
-            temperature=temperature,
+            temperature=t,
             on_inference_iteration=on_inference_iteration,
+            blocked_domains=blocked_domains,
         )
 
         if no_resolve:
@@ -149,13 +155,20 @@ def _get_domains_for_group(
             return predictions
 
         predictions_that_resolve = run_resolution(predictions, resolution_concurrency)
-        end_log = "" if no_recursion else "done"
+        if not max_recursion:
+            end_log = ""
+        else:
+            sub_count = len(predictions_that_resolve)
+            subs_label = "sub" if sub_count == 1 else "subs"
+            end_log = f" found {sub_count} {subs_label}"
         print_log(end_log, end="\n")
-
+        
         if not predictions_that_resolve:
             break
 
         all_predictions_that_resolve |= predictions_that_resolve
+        
+        blocked_domains |= {Domain(val) for val in predictions}
         domains_in_group |= {Domain(dom) for dom in predictions_that_resolve}
 
     return all_predictions_that_resolve
@@ -171,7 +184,7 @@ def run(
     no_resolve: bool = False,
     force_download: bool = False,
     multi_apex: bool = False,
-    no_recursion: bool = True,
+    max_recursion: int = 5,
     print_cli_progress: bool = False,
 ) -> list[str]:
     """Check types, download model, get new subdomains for each apex."""
@@ -182,6 +195,7 @@ def run(
     device = device_type(device)
     num_predictions = positive_int_type(num_predictions)
     max_new_tokens = positive_int_type(max_new_tokens)
+    max_recursion = max_recursion_type(max_recursion)
     temperature = temperature_type(temperature)
     resolution_concurrency = concurrency_type(resolution_concurrency)
 
@@ -206,8 +220,8 @@ def run(
             multi_apex=multi_apex,
             num_predictions=num_predictions,
             max_new_tokens=max_new_tokens,
+            max_recursion=max_recursion,
             temperature=temperature,
-            no_recursion=no_recursion,
             no_resolve=no_resolve,
             resolution_concurrency=resolution_concurrency,
             print_cli_progress=print_cli_progress,

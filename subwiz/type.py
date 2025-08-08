@@ -28,6 +28,17 @@ class Domain:
         return self.subdomain + "." + self.apex_domain
 
 
+def max_recursion_type(value: str | int) -> int:
+    try:
+        ivalue = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"use an integer >= 0 and <= 50: {value}")
+    # don't allow > 50, so that model does not generate forever for wild card
+    if not 0 <= ivalue <= 50:
+        raise argparse.ArgumentTypeError(f"use an integer >= 0 and <= 50 {value}")
+    return ivalue
+
+
 def positive_int_type(value: str | int) -> int:
     try:
         ivalue = int(value)
