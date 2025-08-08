@@ -109,6 +109,7 @@ def run_resolution(predictions: set[str], resolution_concurrency: int) -> set[st
 
 def _get_domains_for_group(
     domains_in_group: set[Domain],
+    all_apexes: set[str],
     gpt_model: GPT,
     tokenizer: PreTrainedTokenizerFast,
     multi_apex: bool,
@@ -131,7 +132,16 @@ def _get_domains_for_group(
 
         on_inference_iteration = None
         if print_cli_progress:
-            on_inference_iteration = print_progress_dot
+
+            dots_emitted = 0
+
+            def _counting_progress_dot():
+                nonlocal dots_emitted
+                dots_emitted += 1
+                print_progress_dot()
+
+            on_inference_iteration = _counting_progress_dot
+
             log = "running inference"
             if multi_apex:
                 log += f" for {apex}"
@@ -155,20 +165,26 @@ def _get_domains_for_group(
             return predictions
 
         predictions_that_resolve = run_resolution(predictions, resolution_concurrency)
-        if not max_recursion:
-            end_log = ""
-        else:
-            sub_count = len(predictions_that_resolve)
-            subs_label = "subdomain" if sub_count == 1 else "subdomains"
-            end_log = f" found {sub_count} {subs_label}"
-        print_log(end_log, end="\n")
+        
+        if print_cli_progress:
+            if not max_recursion:
+                end_log = ""
+            else:
+                printed_characters = len(apex) + dots_emitted + (0 if i == 0 else 3)
+                max_characters = max(len(a) for a in all_apexes) + max_new_tokens + 3
+                extra_spaces = max_characters - printed_characters
+                
+                sub_count = len(predictions_that_resolve)
+                subs_label = "subdomain" if sub_count == 1 else "subdomains"
+                end_log = " " * extra_spaces + f"found {sub_count} {subs_label}"
+            print_log(end_log, end="\n")
 
         if not predictions_that_resolve:
             break
 
         all_predictions_that_resolve |= predictions_that_resolve
 
-        blocked_domains |= {Domain(val) for val in predictions}
+        blocked_domains |= {Domain(dom) for dom in predictions}
         domains_in_group |= {Domain(dom) for dom in predictions_that_resolve}
 
     return all_predictions_that_resolve
@@ -215,6 +231,7 @@ def run(
     for _, domains_in_group in domain_groups.items():
         found_domains |= _get_domains_for_group(
             domains_in_group=domains_in_group,
+            all_apexes=set(domain_groups.keys()),
             gpt_model=gpt_model,
             tokenizer=tokenizer,
             multi_apex=multi_apex,
