@@ -317,7 +317,7 @@ class GPT(nn.Module):
             sequences = sequences[:, -self.config.block_size :]
 
             # remove any sequences with a double dot in them (invalid domain name)
-            outputs = self.tokenizer.batch_decode(sequences[:, - i:])
+            outputs = self.tokenizer.batch_decode(sequences[:, -i:])
             outputs = [b.replace(" ", "") for b in outputs]
             double_dot_mask = torch.tensor([".." not in s for s in outputs])
             sequences = sequences[double_dot_mask]
@@ -343,15 +343,19 @@ class GPT(nn.Module):
                 end_token_probs = new_sequence_probs[:, self.end_token]
                 _finish_probs = end_token_probs + comma_token_probs
                 _finished_sequences = sequences.clone().detach()
-                
+
                 # any sequences which decode to a blocked string are not outputted
                 if blocked_outputs is not None:
-                    blocked_sequences = torch.tensor([s not in blocked_outputs for s in outputs], device=self.device)
+                    blocked_sequences = torch.tensor(
+                        [s not in blocked_outputs for s in outputs], device=self.device
+                    )
                     _finish_probs = _finish_probs[blocked_sequences]
                     _finished_sequences = _finished_sequences[blocked_sequences]
 
                 # add all sequences to the finished_sequences with prob of ending
-                finished_sequences = torch.cat((finished_sequences, _finished_sequences))
+                finished_sequences = torch.cat(
+                    (finished_sequences, _finished_sequences)
+                )
                 finished_probs = torch.cat((finished_probs, _finish_probs), dim=-1)
 
             # remove sequences and tokens with a probability that is too low
@@ -432,7 +436,7 @@ class GPT(nn.Module):
 
         if len(finished_sequences) <= topn:
             return finished_sequences
-        
+
         _, final_indices = torch.topk(finished_probs, topn)
         final_sequences = finished_sequences[final_indices]
 

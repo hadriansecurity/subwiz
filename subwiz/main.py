@@ -92,7 +92,7 @@ def run_inference(
         tokenizer.decode(pred).replace(" ", "").rsplit("[DELIM]", 1)[1]
         for pred in predictions
     }
-    
+
     predictions = {sub + "." + apex for sub in predictions}
 
     return predictions
@@ -121,7 +121,7 @@ def _get_domains_for_group(
     print_cli_progress: bool,
 ) -> set[str]:
     """For a group of subdomains that share an apex: run inference and check if they resolve, recursively."""
-    
+
     blocked_domains: set[Domain] = domains_in_group.copy()
     all_predictions_that_resolve: set[Domain] = set()
     apex = next(iter(domains_in_group)).apex_domain
@@ -162,12 +162,12 @@ def _get_domains_for_group(
             subs_label = "sub" if sub_count == 1 else "subs"
             end_log = f" found {sub_count} {subs_label}"
         print_log(end_log, end="\n")
-        
+
         if not predictions_that_resolve:
             break
 
         all_predictions_that_resolve |= predictions_that_resolve
-        
+
         blocked_domains |= {Domain(val) for val in predictions}
         domains_in_group |= {Domain(dom) for dom in predictions_that_resolve}
 
