@@ -228,9 +228,9 @@ def run(
     gpt_model, tokenizer = get_model_and_tokenizer(force_download, device=device)
     found_domains = set()
 
-    for _, domains_in_group in domain_groups.items():
+    for apex in sorted(domain_groups):
         found_domains |= _get_domains_for_group(
-            domains_in_group=domains_in_group,
+            domains_in_group=domain_groups[apex],
             all_apexes=set(domain_groups.keys()),
             gpt_model=gpt_model,
             tokenizer=tokenizer,
