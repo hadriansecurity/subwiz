@@ -1,3 +1,0 @@
-test-1.hdrn.nu
-test-2.hadrian.io
-test-3.hadrian.io

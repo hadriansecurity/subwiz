@@ -1,3 +1,0 @@
-test-1.hadrian.io
-test-2.hadrian.io
-test-3.hadrian.io

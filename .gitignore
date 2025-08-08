@@ -5,3 +5,6 @@ dist/
 subwiz.egg-info/
 __pycache__/
 .DS_Store
+*.txt
+!requirements.txt
+!example_input.txt
