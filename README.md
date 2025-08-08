@@ -31,8 +31,9 @@ Seed subwiz with these subdomains:
 
 ```commandline
 usage: cli.py [-h] -i INPUT_FILE [-o OUTPUT_FILE] [-n NUM_PREDICTIONS] [--no-resolve]
-              [--force-download] [--no-recursion] [-t TEMPERATURE] [-d {auto,cpu,cuda,mps}]
-              [-q MAX_NEW_TOKENS] [--resolution-concurrency RESOLUTION_CONCURRENCY] [--multi-apex]
+              [--force-download] [--max-recursion MAX_RECURSION] [-t TEMPERATURE]
+              [-d {auto,cpu,cuda,mps}] [-q MAX_NEW_TOKENS]
+              [--resolution-concurrency RESOLUTION_CONCURRENCY] [--multi-apex]
 
 options:
   -h, --help            show this help message and exit
@@ -44,8 +45,9 @@ options:
                         number of subdomains to predict. (default: 500)
   --no-resolve          do not resolve the output subdomains. (default: False)
   --force-download      download model and tokenizer files, even if cached. (default: False)
-  --no-recursion        do not automatically re-run subwiz if it finds new subdomains. (default:
-                        False)
+  --max-recursion MAX_RECURSION
+                        maximum number of times the inference process will recursively re-run
+                        after finding new subdomains. (default: 5)
   -t TEMPERATURE, --temperature TEMPERATURE
                         add randomness to the model (recommended ≤ 0.3). (default: 0.0)
   -d {auto,cpu,cuda,mps}, --device {auto,cpu,cuda,mps}
