@@ -346,11 +346,11 @@ class GPT(nn.Module):
 
                 # any sequences which decode to a blocked string are not outputted
                 if blocked_outputs is not None:
-                    blocked_sequences = torch.tensor(
+                    blocked_sequences_mask = torch.tensor(
                         [s not in blocked_outputs for s in outputs], device=self.device
                     )
-                    _finish_probs = _finish_probs[blocked_sequences]
-                    _finished_sequences = _finished_sequences[blocked_sequences]
+                    _finish_probs = _finish_probs[blocked_sequences_mask]
+                    _finished_sequences = _finished_sequences[blocked_sequences_mask]
 
                 # add all sequences to the finished_sequences with prob of ending
                 finished_sequences = torch.cat(
