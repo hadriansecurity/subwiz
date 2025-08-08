@@ -159,7 +159,7 @@ def _get_domains_for_group(
             end_log = ""
         else:
             sub_count = len(predictions_that_resolve)
-            subs_label = "sub" if sub_count == 1 else "subs"
+            subs_label = "subdomain" if sub_count == 1 else "subdomains"
             end_log = f" found {sub_count} {subs_label}"
         print_log(end_log, end="\n")
 
