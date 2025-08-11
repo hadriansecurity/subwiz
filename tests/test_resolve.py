@@ -10,4 +10,4 @@ def test_():
     registered_domains = asyncio.run(
         get_registered_domains(input_domains, resolution_concurrency=10)
     )
-    assert registered_domains == {"api.hadrian.io", "app.hadrian.io"}
+    assert registered_domains == {Domain("api.hadrian.io"), Domain("app.hadrian.io")}
