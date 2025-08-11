@@ -11,7 +11,7 @@ import torch
 
 class Domain:
     def __init__(self, value: str):
-        extract = tldextract.extract(value)
+        extract = tldextract.extract(value.lower())
 
         if not (extract.domain and extract.suffix):
             raise ValueError(f"not a valid domain: {value}")
