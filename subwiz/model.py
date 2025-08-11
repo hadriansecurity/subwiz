@@ -365,7 +365,7 @@ class GPT(nn.Module):
                 ]
                 _finish_probs = _finish_probs[valid_subdomain_mask]
                 _finished_sequences = _finished_sequences[valid_subdomain_mask]
-                outputs = [o for o, valid in zip(outputs, valid_subdomain_mask) if valid]
+                outputs = [o for o, val in zip(outputs, valid_subdomain_mask) if val]
 
                 # don't output anything in blocked_outputs
                 if blocked_outputs and outputs:
