@@ -12,6 +12,7 @@ https://github.com/openai/gpt-2/blob/master/src/model.py
 https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
 """
 
+import re
 from datetime import datetime
 import math
 import inspect
@@ -24,6 +25,17 @@ import torch.nn as nn
 from torch.nn import functional as F
 from transformers import PreTrainedTokenizerFast
 from typing import Callable, Optional
+
+
+VALID_SUBDOMAIN_RE = re.compile(
+    r"^(?!-)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*(?<!\.)$",
+    re.IGNORECASE,
+)
+
+VALID_SUBDOMAIN_START_RE = re.compile(
+    r"^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61})?)?$",
+    re.IGNORECASE,
+)
 
 
 class LayerNorm(nn.Module):
@@ -316,13 +328,16 @@ class GPT(nn.Module):
             # trim the sequences down to block size
             sequences = sequences[:, -self.config.block_size :]
 
-            # remove any sequences with a double dot in them (invalid domain name)
+            # remove any invalid subdomain starts
             outputs = self.tokenizer.batch_decode(sequences[:, -i:])
-            outputs = [b.replace(" ", "") for b in outputs]
-            double_dot_mask = torch.tensor([".." not in s for s in outputs])
-            sequences = sequences[double_dot_mask]
-            probabilities = probabilities[double_dot_mask]
-            outputs = [o for o in outputs if ".." not in o]
+            outputs = [o.replace(" ", "") for o in outputs]
+            outputs = [o.rsplit("[DELIM]", 1)[-1] for o in outputs]
+            valid_start_mask = [
+                bool(VALID_SUBDOMAIN_START_RE.match(o)) for o in outputs
+            ]
+            sequences = sequences[valid_start_mask]
+            probabilities = probabilities[valid_start_mask]
+            outputs = [o for o, valid in zip(outputs, valid_start_mask) if valid]
 
             # inference the model in batches
             batch_size = 8
@@ -344,8 +359,16 @@ class GPT(nn.Module):
                 _finish_probs = end_token_probs + comma_token_probs
                 _finished_sequences = sequences.clone().detach()
 
-                # any sequences which decode to a blocked string are not outputted
-                if blocked_outputs is not None:
+                # don't output any invalid subdomains
+                valid_subdomain_mask = [
+                    bool(VALID_SUBDOMAIN_RE.match(o)) for o in outputs
+                ]
+                _finish_probs = _finish_probs[valid_subdomain_mask]
+                _finished_sequences = _finished_sequences[valid_subdomain_mask]
+                outputs = [o for o, valid in zip(outputs, valid_subdomain_mask) if valid]
+
+                # don't output anything in blocked_outputs
+                if blocked_outputs and outputs:
                     blocked_outputs_mask = torch.tensor(
                         [s not in blocked_outputs for s in outputs], device=self.device
                     )

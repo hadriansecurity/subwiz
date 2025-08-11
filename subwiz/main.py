@@ -11,7 +11,7 @@ from transformers import PreTrainedTokenizerFast
 
 from subwiz.cli_printer import print_hello, print_log, print_progress_dot
 from subwiz.model import GPT
-from subwiz.resolve import is_registered_bulk
+from subwiz.resolve import get_registered_domains
 from subwiz.type import (
     Domain,
     input_domains_type,
@@ -62,9 +62,9 @@ def run_inference(
     num_predictions: int,
     max_new_tokens: int,
     temperature: float,
-    blocked_domains: set[str],
+    blocked_domains: set[Domain],
     on_inference_iteration: Callable = None,
-) -> set[str]:
+) -> set[Domain]:
     """Preprocess inputs, tokenize text, run inference and decode tokens back to text."""
 
     apex = next(iter(input_domains)).apex_domain
@@ -93,18 +93,16 @@ def run_inference(
         for pred in predictions
     }
 
-    predictions = {sub + "." + apex for sub in predictions}
+    predictions: set[str] = {sub + "." + apex for sub in predictions}
 
-    return predictions
+    predicted_domains: set[Domain] = set()
+    for pred in predictions:
+        try:
+            predicted_domains.add(Domain(pred))
+        except ValueError:  # invalid domain name
+            pass
 
-
-def run_resolution(predictions: set[str], resolution_concurrency: int) -> set[str]:
-    """Check whether predictions resolve."""
-
-    registered_domains = asyncio.run(
-        is_registered_bulk(predictions, resolution_concurrency)
-    )
-    return registered_domains
+    return predicted_domains
 
 
 def _get_domains_for_group(
@@ -162,9 +160,11 @@ def _get_domains_for_group(
 
         if no_resolve:
             print_log("", end="\n")
-            return predictions
+            return {str(dom) for dom in predictions}
 
-        predictions_that_resolve = run_resolution(predictions, resolution_concurrency)
+        predictions_that_resolve = asyncio.run(
+            get_registered_domains(predictions, resolution_concurrency)
+        )
 
         if print_cli_progress:
             if not max_recursion:
@@ -184,10 +184,10 @@ def _get_domains_for_group(
 
         all_predictions_that_resolve |= predictions_that_resolve
 
-        blocked_domains |= {Domain(dom) for dom in predictions}
-        domains_in_group |= {Domain(dom) for dom in predictions_that_resolve}
+        blocked_domains |= predictions
+        domains_in_group |= predictions_that_resolve
 
-    return all_predictions_that_resolve
+    return {str(dom) for dom in all_predictions_that_resolve}
 
 
 def run(

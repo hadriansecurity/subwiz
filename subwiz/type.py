@@ -1,7 +1,10 @@
 import argparse
+import asyncio
 import os
 from typing import Optional, Union
 
+import aiodns
+import idna.core
 import tldextract
 import torch
 
@@ -26,6 +29,18 @@ class Domain:
         if not self.subdomain:
             return self.apex_domain
         return self.subdomain + "." + self.apex_domain
+
+    async def is_registered(
+        self, resolver: aiodns.DNSResolver, semaphore: asyncio.Semaphore
+    ) -> bool:
+        async with semaphore:
+            try:
+                await resolver.query(str(self), "A")
+                return True
+            except idna.IDNAError:
+                return False
+            except aiodns.error.DNSError:
+                return False
 
 
 def max_recursion_type(value: str | int) -> int:

@@ -1,7 +1,13 @@
-from subwiz.main import run_resolution
+import asyncio
+
+from subwiz.resolve import get_registered_domains
+from subwiz.type import Domain
 
 
 def test_():
-    input_domains = {"api.hadrian.io", "random_test.hadrian.io", "app.hadrian.io"}
-    registered_domains = run_resolution(input_domains, resolution_concurrency=10)
+    domain_strings = {"api.hadrian.io", "app.hadrian.io", "random_string.hadrian.io"}
+    input_domains = {Domain(dom) for dom in domain_strings}
+    registered_domains = asyncio.run(
+        get_registered_domains(input_domains, resolution_concurrency=10)
+    )
     assert registered_domains == {"api.hadrian.io", "app.hadrian.io"}
