@@ -171,11 +171,11 @@ def _get_domains_for_group(
             else:
                 printed_characters = len(apex) + dots_emitted + (0 if i == 0 else 3)
                 max_characters = max(len(a) for a in all_apexes) + max_new_tokens + 3
-                extra_spaces = max_characters - printed_characters
+                extra_spaces = max_characters - printed_characters + 1
 
                 sub_count = len(predictions_that_resolve)
                 subs_label = "subdomain" if sub_count == 1 else "subdomains"
-                end_log = " " * extra_spaces + f"found {sub_count} {subs_label}"
+                end_log = " " * extra_spaces + f"found {sub_count:>3} {subs_label:>10}"
             print_log(end_log, end="\n")
 
         if not predictions_that_resolve:
