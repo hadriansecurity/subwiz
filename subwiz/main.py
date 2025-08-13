@@ -125,8 +125,7 @@ def _get_domains_for_group(
     all_predictions_that_resolve: set[Domain] = set()
     apex = next(iter(domains_in_group)).apex_domain
 
-    t = temperature
-    for i in range(max_recursion + 1):
+    for i in range(max_recursion):
 
         on_inference_iteration = None
         if print_cli_progress:
@@ -153,7 +152,7 @@ def _get_domains_for_group(
             tokenizer=tokenizer,
             num_predictions=num_predictions,
             max_new_tokens=max_new_tokens,
-            temperature=t,
+            temperature=temperature,
             on_inference_iteration=on_inference_iteration,
             blocked_domains=blocked_domains,
         )
