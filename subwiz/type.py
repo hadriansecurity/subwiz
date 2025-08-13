@@ -1,31 +1,68 @@
 import argparse
+import asyncio
 import os
 from typing import Optional, Union
 
+import aiodns
+import idna.core
 import tldextract
 import torch
 
 
 class Domain:
     def __init__(self, value: str):
-        extract = tldextract.extract(value)
-        self.subdomain, self.domain, self.suffix = (
+        extract = tldextract.extract(value.lower())
+
+        if not (extract.domain and extract.suffix):
+            raise ValueError(f"not a valid domain: {value}")
+
+        self._subdomain, self._domain, self._suffix = (
             extract.subdomain,
             extract.domain,
             extract.suffix,
         )
 
-        if not bool(self.domain and self.suffix):
-            raise ValueError(f"not a valid domain: {value}")
+    @property
+    def subdomain(self) -> str:
+        return self._subdomain
 
     @property
     def apex_domain(self) -> str:
-        return self.domain + "." + self.suffix
+        return self._domain + "." + self._suffix
 
     def __str__(self):
-        if not self.subdomain:
-            return self.apex_domain
-        return self.subdomain + "." + self.apex_domain
+        if not self._subdomain:
+            return self._apex_domain
+        return self._subdomain + "." + self.apex_domain
+
+    def __hash__(self):
+        return hash(str(self))
+
+    def __eq__(self, other):
+        return str(self) == str(other)
+
+    async def is_registered(
+        self, resolver: aiodns.DNSResolver, semaphore: asyncio.Semaphore
+    ) -> bool:
+        async with semaphore:
+            try:
+                await resolver.query(str(self), "A")
+                return True
+            except idna.IDNAError:
+                return False
+            except aiodns.error.DNSError:
+                return False
+
+
+def max_recursion_type(value: str | int) -> int:
+    try:
+        ivalue = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"use an integer >= 0 and <= 50: {value}")
+    # don't allow > 50, so that model does not generate forever for wild card
+    if not 0 <= ivalue <= 50:
+        raise argparse.ArgumentTypeError(f"use an integer >= 0 and <= 50 {value}")
+    return ivalue
 
 
 def positive_int_type(value: str | int) -> int:

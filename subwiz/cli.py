@@ -7,11 +7,11 @@ from subwiz.type import (
     Domain,
     device_type,
     input_domains_file_type,
+    max_recursion_type,
     output_file_type,
     positive_int_type,
     temperature_type,
 )
-
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(
@@ -31,7 +31,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-n",
-    "--num_predictions",
+    "--num-predictions",
     help="number of subdomains to predict.",
     dest="num_predictions",
     default=500,
@@ -39,20 +39,27 @@ parser.add_argument(
 )
 parser.add_argument(
     "--no-resolve",
-    help="do not resolve the output subdomains. ",
+    help="do not resolve the output subdomains.",
     dest="no_resolve",
     action="store_true",
 )
 parser.add_argument(
     "--force-download",
-    help="download model and tokenizer files, even if cached. ",
+    help="download model and tokenizer files, even if cached.",
     dest="force_download",
     action="store_true",
 )
 parser.add_argument(
+    "--max-recursion",
+    help="maximum number of times the inference process will recursively re-run after finding new subdomains.",
+    dest="max_recursion",
+    default=5,
+    type=max_recursion_type,
+)
+parser.add_argument(
     "-t",
     "--temperature",
-    help="add randomness to the model, recommended ≤ 0.3)",
+    help="add randomness to the model (recommended ≤ 0.3).",
     dest="temperature",
     default=0.0,
     type=temperature_type,
@@ -68,16 +75,16 @@ parser.add_argument(
 )
 parser.add_argument(
     "-q",
-    "--max_new_tokens",
+    "--max-new-tokens",
     help="maximum length of predicted subdomains in tokens.",
     dest="max_new_tokens",
     default=10,
     type=positive_int_type,
 )
 parser.add_argument(
-    "--resolution_concurrency",
+    "--resolution-concurrency",
     help="number of concurrent resolutions.",
-    dest="resolution_lim",
+    dest="resolution_concurrency",
     default=128,
     type=positive_int_type,
 )
@@ -95,16 +102,15 @@ def main():
         domain_objects: list[Domain] = args.input_file
         input_domains = [str(dom) for dom in domain_objects]
 
+        run_args = {
+            k: v
+            for k, v in args.__dict__.items()
+            if k not in {"input_file", "output_file", "profile", "profile_output"}
+        }
+
         results = run(
+            **run_args,
             input_domains=input_domains,
-            device=args.device,
-            num_predictions=args.num_predictions,
-            max_new_tokens=args.max_new_tokens,
-            temperature=args.temperature,
-            resolution_concurrency=args.resolution_lim,
-            no_resolve=args.no_resolve,
-            force_download=args.force_download,
-            multi_apex=args.multi_apex,
             print_cli_progress=True,
         )
 

@@ -12,10 +12,8 @@ https://github.com/openai/gpt-2/blob/master/src/model.py
 https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
 """
 
-from datetime import datetime
+import re
 import math
-import inspect
-import os
 import uuid
 
 from pydantic import BaseModel, ConfigDict
@@ -24,6 +22,17 @@ import torch.nn as nn
 from torch.nn import functional as F
 from transformers import PreTrainedTokenizerFast
 from typing import Callable, Optional
+
+
+VALID_SUBDOMAIN_RE = re.compile(
+    r"^(?!-)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*(?<!\.)$",
+    re.IGNORECASE,
+)
+
+VALID_SUBDOMAIN_START_RE = re.compile(
+    r"^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61})?)?$",
+    re.IGNORECASE,
+)
 
 
 class LayerNorm(nn.Module):
@@ -170,6 +179,7 @@ class GPT(nn.Module):
         )
         self.end_token = self.tokenizer("[END]")["input_ids"][0]
         self.comma_token = self.tokenizer(",")["input_ids"][0]
+        self.delim_token = self.tokenizer("[DELIM]")["input_ids"][0]
 
         self.transformer = nn.ModuleDict(
             dict(
@@ -285,6 +295,7 @@ class GPT(nn.Module):
         pruning_offset: float = 5,
         log_file: Optional[str] = None,
         on_iteration: Callable = None,
+        blocked_outputs: set[str] = None,  # doesn't output these strings
     ) -> torch.Tensor:
         """Custom generate function that outputs topn sequences, different to the original nanoGPT implementation."""
 
@@ -314,6 +325,17 @@ class GPT(nn.Module):
             # trim the sequences down to block size
             sequences = sequences[:, -self.config.block_size :]
 
+            # remove any invalid subdomain starts
+            outputs = self.tokenizer.batch_decode(sequences[:, -i:])
+            outputs = [o.replace(" ", "") for o in outputs]
+            outputs = [o.rsplit("[DELIM]", 1)[-1] for o in outputs]
+            valid_start_mask = [
+                bool(VALID_SUBDOMAIN_START_RE.match(o)) for o in outputs
+            ]
+            sequences = sequences[valid_start_mask]
+            probabilities = probabilities[valid_start_mask]
+            outputs = [o for o, valid in zip(outputs, valid_start_mask) if valid]
+
             # inference the model in batches
             batch_size = 8
             logits, _ = self(sequences[:batch_size])
@@ -328,19 +350,39 @@ class GPT(nn.Module):
 
             # remove finished sequences (after end token) and cache their probs
             if i > 0:
-                # feature to add: we should not add subdomain in input to the finished sequences
+                # likelihood of each sequence having an end or comma token next
                 comma_token_probs = new_sequence_probs[:, self.comma_token]
                 end_token_probs = new_sequence_probs[:, self.end_token]
                 _finish_probs = end_token_probs + comma_token_probs
+                _finished_sequences = sequences.clone().detach()
 
-                finished_sequences = torch.cat((finished_sequences, sequences))
+                # don't output any invalid subdomains
+                valid_subdomain_mask = [
+                    bool(VALID_SUBDOMAIN_RE.match(o)) for o in outputs
+                ]
+                _finish_probs = _finish_probs[valid_subdomain_mask]
+                _finished_sequences = _finished_sequences[valid_subdomain_mask]
+                outputs = [o for o, val in zip(outputs, valid_subdomain_mask) if val]
+
+                # don't output anything in blocked_outputs
+                if blocked_outputs and outputs:
+                    blocked_outputs_mask = torch.tensor(
+                        [s not in blocked_outputs for s in outputs], device=self.device
+                    )
+                    _finish_probs = _finish_probs[blocked_outputs_mask]
+                    _finished_sequences = _finished_sequences[blocked_outputs_mask]
+
+                # add all sequences to the finished_sequences with prob of ending
+                finished_sequences = torch.cat(
+                    (finished_sequences, _finished_sequences)
+                )
                 finished_probs = torch.cat((finished_probs, _finish_probs), dim=-1)
 
             # remove sequences and tokens with a probability that is too low
             if len(finished_sequences) > topn:
                 # torch.kthvalue is not implemented on MPS, so we use topk
                 lowest_viable_probability = torch.topk(finished_probs, topn).values[-1]
-                viable_sequences = probabilities > lowest_viable_probability
+                viable_sequences = probabilities >= lowest_viable_probability
 
                 if viable_sequences.sum() == 0:
                     break
@@ -412,7 +454,9 @@ class GPT(nn.Module):
                     finished_probs=finished_probs,
                 )
 
-        # take the highest scoring sequences for the next iteration
+        if len(finished_sequences) <= topn:
+            return finished_sequences
+
         _, final_indices = torch.topk(finished_probs, topn)
         final_sequences = finished_sequences[final_indices]
 
