@@ -32,7 +32,7 @@ class Domain:
 
     def __str__(self):
         if not self._subdomain:
-            return self._apex_domain
+            return self._domain
         return self._subdomain + "." + self.apex_domain
 
     def __hash__(self):
@@ -40,18 +40,6 @@ class Domain:
 
     def __eq__(self, other):
         return str(self) == str(other)
-
-    async def is_registered(
-        self, resolver: aiodns.DNSResolver, semaphore: asyncio.Semaphore
-    ) -> bool:
-        async with semaphore:
-            try:
-                await resolver.query(str(self), "A")
-                return True
-            except idna.IDNAError:
-                return False
-            except aiodns.error.DNSError:
-                return False
 
 
 def max_recursion_type(value: str | int) -> int:
@@ -143,7 +131,7 @@ def concurrency_type(value: str | int) -> int:
         raise argparse.ArgumentTypeError(f"not a valid int: {value}")
     if not 1 <= ivalue <= 256:
         raise argparse.ArgumentTypeError(f"use 1 ≤ concurrency ≤ 256: {value}")
-    return value
+    return ivalue
 
 
 def device_type(value: str) -> str:
