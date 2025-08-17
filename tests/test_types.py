@@ -192,7 +192,7 @@ class TestInputDomainsFileType:
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             f.write("sub.example.com\nexample.com\ntest.example.org")
             f.flush()
-            
+
             try:
                 result = input_domains_file_type(f.name)
                 assert len(result) == 3
