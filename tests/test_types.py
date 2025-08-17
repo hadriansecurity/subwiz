@@ -158,9 +158,7 @@ class TestInputDomainsType:
 
     def test_empty_list(self):
         """Test with empty list"""
-        with pytest.raises(
-            argparse.ArgumentTypeError, match="empty input domains"
-        ):
+        with pytest.raises(argparse.ArgumentTypeError, match="empty input domains"):
             input_domains_type([])
 
     def test_no_subdomains(self):
@@ -204,9 +202,7 @@ class TestInputDomainsFileType:
 
     def test_file_not_found(self):
         """Test with non-existent file"""
-        with pytest.raises(
-            argparse.ArgumentTypeError, match="file not found"
-        ):
+        with pytest.raises(argparse.ArgumentTypeError, match="file not found"):
             input_domains_file_type("/nonexistent/file.txt")
 
     def test_invalid_input_type(self):
