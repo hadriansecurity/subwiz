@@ -41,6 +41,18 @@ class Domain:
     def __eq__(self, other):
         return str(self) == str(other)
 
+    async def is_registered(
+        self, resolver: aiodns.DNSResolver, semaphore: asyncio.Semaphore
+    ) -> bool:
+        async with semaphore:
+            try:
+                await resolver.query(str(self), "A")
+                return True
+            except idna.IDNAError:
+                return False
+            except aiodns.error.DNSError:
+                return False
+
 
 def max_recursion_type(value: str | int) -> int:
     try:

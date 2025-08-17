@@ -87,8 +87,7 @@ class TestMaxRecursionType:
     def test_invalid_string(self):
         """Test with invalid string"""
         with pytest.raises(
-            argparse.ArgumentTypeError,
-            match="use an integer >= 0 and <= 50"
+            argparse.ArgumentTypeError, match="use an integer >= 0 and <= 50"
         ):
             max_recursion_type("abc")
 
@@ -160,8 +159,7 @@ class TestInputDomainsType:
     def test_empty_list(self):
         """Test with empty list"""
         with pytest.raises(
-            argparse.ArgumentTypeError,
-            match="empty input domains"
+            argparse.ArgumentTypeError, match="empty input domains"
         ):
             input_domains_type([])
 
@@ -207,8 +205,7 @@ class TestInputDomainsFileType:
     def test_file_not_found(self):
         """Test with non-existent file"""
         with pytest.raises(
-            argparse.ArgumentTypeError,
-            match="file not found"
+            argparse.ArgumentTypeError, match="file not found"
         ):
             input_domains_file_type("/nonexistent/file.txt")
 
