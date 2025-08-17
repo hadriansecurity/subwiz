@@ -1,9 +1,20 @@
+"""Tests for temperature parameter behavior in subdomain generation.
+
+This module contains tests that verify the temperature parameter correctly
+controls the randomness and determinism of subdomain generation results.
+"""
+
 from argparse import ArgumentTypeError
 
 from subwiz import run
 
 
 def test_zero():
+    """Test that temperature=0 produces deterministic results.
+
+    Verifies that running the same input with temperature=0 produces
+    identical results on multiple runs, ensuring deterministic behavior.
+    """
     args = {
         "input_domains": ["admin.hadrian.io", "test.hadrian.io"],
         "num_predictions": 10,
@@ -16,6 +27,11 @@ def test_zero():
 
 
 def test_high():
+    """Test that temperature=1 produces non-deterministic results.
+
+    Verifies that running the same input with temperature=1 produces
+    different results on multiple runs, ensuring non-deterministic behavior.
+    """
     args = {
         "input_domains": ["admin.hadrian.io", "test.hadrian.io"],
         "num_predictions": 20,
@@ -28,6 +44,11 @@ def test_high():
 
 
 def test_out_of_bounds():
+    """Test that out-of-bounds temperature values raise errors.
+
+    Verifies that temperature values outside the valid range [0, 1]
+    raise ArgumentTypeError for both upper and lower bounds.
+    """
     try:
         run(
             input_domains=["admin.hadrian.io"],

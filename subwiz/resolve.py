@@ -1,3 +1,10 @@
+"""DNS resolution module for checking domain registration status.
+
+This module provides asynchronous DNS resolution functionality to check whether
+domains are registered and resolve to IP addresses. It uses multiple nameservers
+for reliability and implements concurrency control for efficient batch processing.
+"""
+
 import asyncio
 
 import aiodns
@@ -14,6 +21,15 @@ TRIES = 1
 async def get_registered_domains(
     domains_to_check: set[Domain], resolution_concurrency: int
 ) -> set[Domain]:
+    """Check which domains from a set are registered and resolve to IP addresses.
+
+    Args:
+        domains_to_check: Set of Domain objects to check for registration
+        resolution_concurrency: Maximum number of concurrent DNS resolutions
+
+    Returns:
+        Set of Domain objects that are registered and resolve successfully
+    """
 
     semaphore = asyncio.Semaphore(resolution_concurrency)
     resolver = aiodns.DNSResolver(

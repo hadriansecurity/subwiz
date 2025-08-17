@@ -1,3 +1,10 @@
+"""Main module for running subdomain enumeration using transformer models.
+
+This module provides the core functionality for downloading models, running inference,
+and orchestrating the subdomain discovery process. It handles model loading,
+tokenization, inference execution, and result processing.
+"""
+
 import argparse
 import asyncio
 import os
@@ -33,7 +40,15 @@ def get_model_and_tokenizer(
     force_download: bool,
     device: str,
 ) -> tuple[GPT, PreTrainedTokenizerFast]:
-    """Download files from HuggingFace to run subwiz. Caches in local file system."""
+    """Download files from HuggingFace to run subwiz. Caches in local file system.
+
+    Args:
+        force_download: Whether to force download even if files exist locally
+        device: Device to load the model on
+
+    Returns:
+        Tuple of (GPT model, tokenizer)
+    """
 
     model_path = hf_hub_download(
         repo_id=MODEL_REPO, filename=MODEL_FILE, force_download=force_download
@@ -65,7 +80,21 @@ def run_inference(
     blocked_domains: set[Domain],
     on_inference_iteration: Callable = None,
 ) -> set[Domain]:
-    """Preprocess inputs, tokenize text, run inference and decode tokens back to text."""
+    """Preprocess inputs, tokenize text, run inference and decode tokens back to text.
+
+    Args:
+        input_domains: Set of input domain objects
+        gpt_model: Loaded GPT model for inference
+        tokenizer: Tokenizer for text processing
+        num_predictions: Number of predictions to generate
+        max_new_tokens: Maximum new tokens to generate
+        temperature: Sampling temperature for generation
+        blocked_domains: Domains that should not be generated
+        on_inference_iteration: Optional callback for progress tracking
+
+    Returns:
+        Set of predicted domain objects
+    """
 
     apex = next(iter(input_domains)).apex_domain
     subs = [dom.subdomain for dom in input_domains]
@@ -119,7 +148,25 @@ def _get_domains_for_group(
     resolution_concurrency: int,
     print_cli_progress: bool,
 ) -> set[str]:
-    """For a group of subdomains that share an apex: run inference and check if they resolve, recursively."""
+    """For a group of subdomains that share an apex: run inference and check if they resolve, recursively.
+
+    Args:
+        domains_in_group: Set of domains sharing the same apex
+        all_apexes: Set of all apex domains for progress display
+        gpt_model: Loaded GPT model for inference
+        tokenizer: Tokenizer for text processing
+        multi_apex: Whether multiple apex domains are being processed
+        num_predictions: Number of predictions to generate
+        max_new_tokens: Maximum new tokens to generate
+        max_recursion: Maximum recursion depth for discovery
+        temperature: Sampling temperature for generation
+        no_resolve: Whether to skip DNS resolution
+        resolution_concurrency: Number of concurrent DNS resolutions
+        print_cli_progress: Whether to print progress information
+
+    Returns:
+        Set of discovered subdomain strings
+    """
 
     blocked_domains: set[Domain] = domains_in_group.copy()
     all_predictions_that_resolve: set[Domain] = set()
@@ -202,7 +249,27 @@ def run(
     max_recursion: int = 5,
     print_cli_progress: bool = False,
 ) -> list[str]:
-    """Check types, download model, get new subdomains for each apex."""
+    """Check types, download model, get new subdomains for each apex.
+
+    Args:
+        input_domains: List of input domain strings
+        device: Hardware device to run the model on
+        num_predictions: Number of subdomains to predict
+        max_new_tokens: Maximum length of predicted subdomains in tokens
+        temperature: Sampling temperature for generation
+        resolution_concurrency: Number of concurrent DNS resolutions
+        no_resolve: Whether to skip DNS resolution
+        force_download: Whether to force download model files
+        multi_apex: Whether to allow multiple apex domains
+        max_recursion: Maximum recursion depth for discovery
+        print_cli_progress: Whether to print progress information
+
+    Returns:
+        List of discovered subdomain strings
+
+    Raises:
+        argparse.ArgumentTypeError: If multiple apex domains found without multi_apex flag
+    """
     if print_cli_progress:
         print_hello()
 
