@@ -31,9 +31,7 @@ class Domain:
         return self._domain + "." + self._suffix
 
     def __str__(self):
-        if not self._subdomain:
-            return self._domain
-        return self._subdomain + "." + self.apex_domain
+        return (self._subdomain + "." if self._subdomain else "") + self.apex_domain
 
     def __hash__(self):
         return hash(str(self))

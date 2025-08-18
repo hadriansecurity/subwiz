@@ -33,7 +33,7 @@ class TestDomain:
         domain = Domain("example.com")
         assert domain.subdomain == ""
         assert domain.apex_domain == "example.com"
-        assert str(domain) == "example"
+        assert str(domain) == "example.com"
 
     def test_domain_with_multiple_subdomains(self):
         """Test creating a domain with multiple subdomains"""
