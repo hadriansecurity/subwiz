@@ -31,7 +31,7 @@ class Domain:
         return self._domain + "." + self._suffix
 
     def __str__(self):
-       if not self._subdomain:
+        if not self._subdomain:
             return self.apex_domain
         return self._subdomain + "." + self.apex_domain
 
@@ -148,7 +148,7 @@ def concurrency_type(value: str | int) -> int:
 
 def device_type(value: str) -> str:
     if not isinstance(value, str):
-        raise argparse.ArgumentTypeError(f"use a string for the device")
+        raise argparse.ArgumentTypeError("use a string for the device")
 
     if value not in ["auto", "cpu", "cuda", "mps"]:
         raise argparse.ArgumentTypeError(
