@@ -161,14 +161,6 @@ class TestInputDomainsType:
         with pytest.raises(argparse.ArgumentTypeError, match="empty input domains"):
             input_domains_type([])
 
-    def test_no_subdomains(self):
-        """Test with domains but no subdomains"""
-        with pytest.raises(
-            argparse.ArgumentTypeError,
-            match="input should include at least one subdomain",
-        ):
-            input_domains_type(["example.com", "test.org"])
-
     def test_invalid_domains(self):
         """Test with invalid domains"""
         with pytest.raises(

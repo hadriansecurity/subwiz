@@ -91,7 +91,7 @@ def input_domains_file_type(value: str | os.PathLike) -> list[Domain]:
 
 def input_domains_type(value: list[str]) -> list[Domain]:
     if len(value) == 0:
-        raise argparse.ArgumentTypeError(f"empty input domains")
+        raise argparse.ArgumentTypeError("empty input domains")
 
     value = set(value)
 
@@ -105,11 +105,6 @@ def input_domains_type(value: list[str]) -> list[Domain]:
     if invalid_domains:
         raise argparse.ArgumentTypeError(
             f"invalid input domains: {sorted(invalid_domains)}"
-        )
-
-    if not any(dom.subdomain for dom in domains):
-        raise argparse.ArgumentTypeError(
-            f"input should include at least one subdomain: {list(value)}"
         )
 
     return domains
