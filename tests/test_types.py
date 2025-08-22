@@ -336,7 +336,7 @@ class TestDeviceType:
         """Test with invalid device name"""
         with pytest.raises(
             argparse.ArgumentTypeError,
-            match='device should be in \["auto", "cpu", "cuda", "mps"\]',
+            match=r'device should be in \["auto", "cpu", "cuda", "mps"\]',
         ):
             device_type("invalid")
 
@@ -363,7 +363,3 @@ class TestDeviceType:
         mock_cuda.return_value = False
         mock_mps.return_value = False
         assert device_type("auto") == "cpu"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
