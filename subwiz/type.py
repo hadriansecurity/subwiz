@@ -32,7 +32,7 @@ class Domain:
 
     def __str__(self):
         if not self._subdomain:
-            return self._apex_domain
+            return self.apex_domain
         return self._subdomain + "." + self.apex_domain
 
     def __hash__(self):
@@ -91,7 +91,7 @@ def input_domains_file_type(value: str | os.PathLike) -> list[Domain]:
 
 def input_domains_type(value: list[str]) -> list[Domain]:
     if len(value) == 0:
-        raise argparse.ArgumentTypeError(f"empty input domains")
+        raise argparse.ArgumentTypeError("empty input domains")
 
     value = set(value)
 
@@ -105,11 +105,6 @@ def input_domains_type(value: list[str]) -> list[Domain]:
     if invalid_domains:
         raise argparse.ArgumentTypeError(
             f"invalid input domains: {sorted(invalid_domains)}"
-        )
-
-    if not any(dom.subdomain for dom in domains):
-        raise argparse.ArgumentTypeError(
-            f"input should include at least one subdomain: {list(value)}"
         )
 
     return domains
@@ -143,12 +138,12 @@ def concurrency_type(value: str | int) -> int:
         raise argparse.ArgumentTypeError(f"not a valid int: {value}")
     if not 1 <= ivalue <= 256:
         raise argparse.ArgumentTypeError(f"use 1 ≤ concurrency ≤ 256: {value}")
-    return value
+    return ivalue
 
 
 def device_type(value: str) -> str:
     if not isinstance(value, str):
-        raise argparse.ArgumentTypeError(f"use a string for the device")
+        raise argparse.ArgumentTypeError("use a string for the device")
 
     if value not in ["auto", "cpu", "cuda", "mps"]:
         raise argparse.ArgumentTypeError(
