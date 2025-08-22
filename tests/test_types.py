@@ -1,10 +1,10 @@
-import pytest
 import argparse
 import os
 import tempfile
 from unittest.mock import patch, MagicMock
-import torch
 
+import pytest
+import torch
 from subwiz.type import (
     Domain,
     max_recursion_type,
