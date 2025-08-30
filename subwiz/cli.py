@@ -74,7 +74,7 @@ parser.add_argument(
     type=device_type,
 )
 parser.add_argument(
-    "-q",
+    "-m",
     "--max-new-tokens",
     help="maximum length of predicted subdomains in tokens.",
     dest="max_new_tokens",
@@ -94,24 +94,47 @@ parser.add_argument(
     dest="multi_apex",
     action="store_true",
 )
+parser.add_argument(
+    "-q",
+    "--quiet",
+    help="useful for piping into another tool.",
+    action="store_true",
+)
+parser.add_argument(
+    "-s",
+    "--silent",
+    help="do not print any output. requires --output-file.",
+    action="store_true",
+)
 args = parser.parse_args()
 
 
 def main():
     try:
+        if args.silent and not args.output_file:
+            parser.error("--silent requires --output-file.")
+
         domain_objects: list[Domain] = args.input_file
         input_domains = [str(dom) for dom in domain_objects]
 
         run_args = {
             k: v
             for k, v in args.__dict__.items()
-            if k not in {"input_file", "output_file", "profile", "profile_output"}
+            if k
+            not in {
+                "input_file",
+                "output_file",
+                "profile",
+                "profile_output",
+                "silent",
+                "quiet",
+            }
         }
 
         results = run(
             **run_args,
             input_domains=input_domains,
-            print_cli_progress=True,
+            quiet=args.quiet or args.silent,
         )
 
         output = "\n".join(sorted(results))
@@ -119,7 +142,8 @@ def main():
         if args.output_file:
             with open(args.output_file, "w") as f:
                 f.write(output)
-        else:
+
+        if not args.silent:
             print(output)
 
     except argparse.ArgumentTypeError as e:
