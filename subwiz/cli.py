@@ -1,4 +1,9 @@
-"""Exposes a command line interface that runs subwiz and returns the result."""
+"""Exposes a command line interface that runs subwiz and returns the result.
+
+This module provides a command-line interface for the subwiz subdomain enumeration
+tool. It handles argument parsing, input validation, and orchestrates the main
+execution flow with proper error handling and output formatting.
+"""
 
 import argparse
 
@@ -110,6 +115,12 @@ args = parser.parse_args()
 
 
 def main():
+    """Main CLI entry point for subwiz.
+
+    Parses command line arguments, runs the subdomain enumeration process,
+    and outputs results to either a file or stdout. Handles errors gracefully
+    and provides user-friendly error messages.
+    """
     try:
         if args.silent and not args.output_file:
             parser.error("--silent requires --output-file.")

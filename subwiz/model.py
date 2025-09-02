@@ -39,16 +39,37 @@ class LayerNorm(nn.Module):
     """LayerNorm but with an optional bias. PyTorch doesn't support simply bias=False"""
 
     def __init__(self, ndim, bias):
+        """Initialize LayerNorm with optional bias parameter.
+
+        Args:
+            ndim: Number of dimensions for normalization
+            bias: Whether to include bias parameter
+        """
         super().__init__()
         self.weight = nn.Parameter(torch.ones(ndim))
         self.bias = nn.Parameter(torch.zeros(ndim)) if bias else None
 
     def forward(self, input):
+        """Forward pass through the layer normalization.
+
+        Args:
+            input: Input tensor to normalize
+
+        Returns:
+            Normalized tensor
+        """
         return F.layer_norm(input, self.weight.shape, self.weight, self.bias, 1e-5)
 
 
 class CausalSelfAttention(nn.Module):
+    """Causal self-attention mechanism for transformer architecture."""
+
     def __init__(self, config):
+        """Initialize the causal self-attention module.
+
+        Args:
+            config: Configuration object containing attention parameters
+        """
         super().__init__()
         assert config.n_embd % config.n_head == 0
         # key, query, value projections for all heads, but in a batch
@@ -76,6 +97,14 @@ class CausalSelfAttention(nn.Module):
             )
 
     def forward(self, x):
+        """Forward pass through the attention mechanism.
+
+        Args:
+            x: Input tensor of shape (batch_size, sequence_length, embedding_dim)
+
+        Returns:
+            Output tensor after self-attention processing
+        """
         (
             B,
             T,
@@ -122,7 +151,14 @@ class CausalSelfAttention(nn.Module):
 
 
 class MLP(nn.Module):
+    """Multi-layer perceptron with GELU activation and dropout."""
+
     def __init__(self, config):
+        """Initialize the MLP module.
+
+        Args:
+            config: Configuration object containing MLP parameters
+        """
         super().__init__()
         self.c_fc = nn.Linear(config.n_embd, 4 * config.n_embd, bias=config.bias)
         self.gelu = nn.GELU()
@@ -130,6 +166,14 @@ class MLP(nn.Module):
         self.dropout = nn.Dropout(config.dropout)
 
     def forward(self, x):
+        """Forward pass through the MLP.
+
+        Args:
+            x: Input tensor
+
+        Returns:
+            Output tensor after MLP processing
+        """
         x = self.c_fc(x)
         x = self.gelu(x)
         x = self.c_proj(x)
@@ -138,7 +182,14 @@ class MLP(nn.Module):
 
 
 class Block(nn.Module):
+    """Transformer block containing attention and MLP layers."""
+
     def __init__(self, config):
+        """Initialize the transformer block.
+
+        Args:
+            config: Configuration object containing block parameters
+        """
         super().__init__()
         self.ln_1 = LayerNorm(config.n_embd, bias=config.bias)
         self.attn = CausalSelfAttention(config)
@@ -146,12 +197,22 @@ class Block(nn.Module):
         self.mlp = MLP(config)
 
     def forward(self, x):
+        """Forward pass through the transformer block.
+
+        Args:
+            x: Input tensor
+
+        Returns:
+            Output tensor after block processing
+        """
         x = x + self.attn(self.ln_1(x))
         x = x + self.mlp(self.ln_2(x))
         return x
 
 
 class GPTConfig(BaseModel):
+    """Configuration class for GPT model parameters."""
+
     block_size: int = 1024
     vocab_size: int = (
         50304  # GPT-2 vocab_size of 50257, padded up to nearest multiple of 64 for efficiency
@@ -169,7 +230,14 @@ class GPTConfig(BaseModel):
 
 
 class GPT(nn.Module):
+    """GPT language model for subdomain generation."""
+
     def __init__(self, config: GPTConfig):
+        """Initialize the GPT model.
+
+        Args:
+            config: Configuration object containing model parameters
+        """
         super().__init__()
         assert config.vocab_size is not None
         assert config.block_size is not None
@@ -212,11 +280,17 @@ class GPT(nn.Module):
         # print("number of parameters: %.2fM" % (self.get_num_params() / 1e6,))
 
     def get_num_params(self, non_embedding=True):
-        """
-        Return the number of parameters in the model.
+        """Return the number of parameters in the model.
+
         For non-embedding count (default), the position embeddings get subtracted.
         The token embeddings would too, except due to the parameter sharing these
         params are actually used as weights in the final layer, so we include them.
+
+        Args:
+            non_embedding: If True, exclude position embeddings from count
+
+        Returns:
+            Number of parameters in the model
         """
         n_params = sum(p.numel() for p in self.parameters())
         if non_embedding:
@@ -224,6 +298,11 @@ class GPT(nn.Module):
         return n_params
 
     def _init_weights(self, module):
+        """Initialize weights for linear and embedding layers.
+
+        Args:
+            module: Module to initialize weights for
+        """
         if isinstance(module, nn.Linear):
             torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
             if module.bias is not None:
@@ -232,6 +311,15 @@ class GPT(nn.Module):
             torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
     def forward(self, idx, targets=None):
+        """Forward pass through the GPT model.
+
+        Args:
+            idx: Input token indices
+            targets: Target token indices for loss calculation
+
+        Returns:
+            Tuple of (logits, loss) where loss is None during inference
+        """
         # with torch.autograd.detect_anomaly():
         #     if torch.isnan(idx).any():
         #         print(f'NAN found!: {idx}')
@@ -267,6 +355,11 @@ class GPT(nn.Module):
         return logits, loss
 
     def crop_block_size(self, block_size):
+        """Reduce the block size of the model if necessary.
+
+        Args:
+            block_size: New block size (must be <= current block size)
+        """
         # model surgery to decrease the block size if necessary
         # e.g. we may load the GPT2 pretrained model checkpoint (block size 1024)
         # but want to use a smaller block size for some smaller, simpler model
@@ -281,6 +374,11 @@ class GPT(nn.Module):
 
     @property
     def device(self) -> str:
+        """Get the device type the model is running on.
+
+        Returns:
+            Device type as string ('cpu', 'cuda', or 'mps')
+        """
         # assign model inputs to the right device
         return next(self.lm_head.parameters()).device.type
 
@@ -297,7 +395,27 @@ class GPT(nn.Module):
         on_iteration: Callable = None,
         blocked_outputs: set[str] = None,  # doesn't output these strings
     ) -> torch.Tensor:
-        """Custom generate function that outputs topn sequences, different to the original nanoGPT implementation."""
+        """Generate multiple sequences using beam search with pruning.
+
+        Custom generate function that outputs topn sequences, different to the original nanoGPT implementation.
+
+        Args:
+            idx: Input token sequence
+            max_new_tokens: Maximum number of new tokens to generate
+            temperature: Sampling temperature (0.0 for greedy, higher for randomness)
+            topn: Number of top sequences to return
+            pruning_ratio: Ratio for pruning sequences during generation
+            pruning_offset: Offset for pruning calculations
+            log_file: Optional file path for logging generation data
+            on_iteration: Optional callback function called on each iteration
+            blocked_outputs: Set of strings that should not be generated
+
+        Returns:
+            Tensor containing the generated sequences
+
+        Raises:
+            ValueError: If topn <= 0 or max_new_tokens not in (0, 20]
+        """
 
         if topn <= 0:
             raise ValueError("topn should be greater than 0")
@@ -469,6 +587,17 @@ class GPT(nn.Module):
         device: str = "cpu",
         tokenizer_path: Optional[str] = None,
     ):
+        """Load a GPT model from a checkpoint file.
+
+        Args:
+            path: Path to the checkpoint file
+            return_train_params: Whether to return training parameters
+            device: Device to load the model on
+            tokenizer_path: Optional path to tokenizer file
+
+        Returns:
+            Loaded GPT model, optionally with training parameters
+        """
         checkpoint = torch.load(path, map_location=device, weights_only=True)
 
         config = GPTConfig(**checkpoint["model_args"])
