@@ -13,6 +13,7 @@ from collections import defaultdict
 from typing import Callable
 
 from huggingface_hub import hf_hub_download
+from huggingface_hub.utils import disable_progress_bars, enable_progress_bars
 import torch
 from transformers import PreTrainedTokenizerFast
 
@@ -39,6 +40,7 @@ CONFIG_FILE = "config.json"
 def get_model_and_tokenizer(
     force_download: bool,
     device: str,
+    quiet: bool,
 ) -> tuple[GPT, PreTrainedTokenizerFast]:
     """Download files from HuggingFace to run subwiz. Caches in local file system.
 
@@ -49,6 +51,8 @@ def get_model_and_tokenizer(
     Returns:
         Tuple of (GPT model, tokenizer)
     """
+    if quiet:
+        disable_progress_bars()
 
     model_path = hf_hub_download(
         repo_id=MODEL_REPO, filename=MODEL_FILE, force_download=force_download
@@ -59,6 +63,8 @@ def get_model_and_tokenizer(
     hf_hub_download(
         repo_id=MODEL_REPO, filename=CONFIG_FILE, force_download=force_download
     )
+    if quiet:
+        enable_progress_bars()
 
     gpt_model = GPT.from_checkpoint(
         model_path, device=device, tokenizer_path=tokenizer_path
@@ -146,7 +152,7 @@ def _get_domains_for_group(
     temperature: float,
     no_resolve: bool,
     resolution_concurrency: int,
-    print_cli_progress: bool,
+    quiet: bool,
 ) -> set[str]:
     """For a group of subdomains that share an apex: run inference and check if they resolve, recursively.
 
@@ -175,7 +181,7 @@ def _get_domains_for_group(
     for i in range(max_recursion):
 
         on_inference_iteration = None
-        if print_cli_progress:
+        if not quiet:
 
             dots_emitted = 0
 
@@ -205,14 +211,15 @@ def _get_domains_for_group(
         )
 
         if no_resolve:
-            print_log("", end="\n")
+            if not quiet:
+                print_log("", end="\n")
             return {str(dom) for dom in predictions}
 
         predictions_that_resolve = asyncio.run(
             get_registered_domains(predictions, resolution_concurrency)
         )
 
-        if print_cli_progress:
+        if not quiet:
             if not max_recursion:
                 end_log = ""
             else:
@@ -247,7 +254,7 @@ def run(
     force_download: bool = False,
     multi_apex: bool = False,
     max_recursion: int = 5,
-    print_cli_progress: bool = False,
+    quiet: bool = True,
 ) -> list[str]:
     """Check types, download model, get new subdomains for each apex.
 
@@ -270,7 +277,7 @@ def run(
     Raises:
         argparse.ArgumentTypeError: If multiple apex domains found without multi_apex flag
     """
-    if print_cli_progress:
+    if not quiet:
         print_hello()
 
     domain_objects = input_domains_type(input_domains)
@@ -291,7 +298,9 @@ def run(
             "Use the --multi-apex flag to process them all."
         )
 
-    gpt_model, tokenizer = get_model_and_tokenizer(force_download, device=device)
+    gpt_model, tokenizer = get_model_and_tokenizer(
+        force_download, device=device, quiet=quiet
+    )
     found_domains = set()
 
     for apex in sorted(domain_groups):
@@ -307,7 +316,7 @@ def run(
             temperature=temperature,
             no_resolve=no_resolve,
             resolution_concurrency=resolution_concurrency,
-            print_cli_progress=print_cli_progress,
+            quiet=quiet,
         )
 
     return sorted(found_domains)

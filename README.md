@@ -32,8 +32,8 @@ Seed subwiz with these subdomains:
 ```commandline
 usage: cli.py [-h] -i INPUT_FILE [-o OUTPUT_FILE] [-n NUM_PREDICTIONS] [--no-resolve]
               [--force-download] [--max-recursion MAX_RECURSION] [-t TEMPERATURE]
-              [-d {auto,cpu,cuda,mps}] [-q MAX_NEW_TOKENS]
-              [--resolution-concurrency RESOLUTION_CONCURRENCY] [--multi-apex]
+              [-d {auto,cpu,cuda,mps}] [-m MAX_NEW_TOKENS]
+              [--resolution-concurrency RESOLUTION_CONCURRENCY] [--multi-apex] [-q] [-s]
 
 options:
   -h, --help            show this help message and exit
@@ -52,12 +52,14 @@ options:
                         add randomness to the model (recommended ≤ 0.3). (default: 0.0)
   -d {auto,cpu,cuda,mps}, --device {auto,cpu,cuda,mps}
                         hardware to run the transformer model on. (default: auto)
-  -q MAX_NEW_TOKENS, --max-new-tokens MAX_NEW_TOKENS
+  -m MAX_NEW_TOKENS, --max-new-tokens MAX_NEW_TOKENS
                         maximum length of predicted subdomains in tokens. (default: 10)
   --resolution-concurrency RESOLUTION_CONCURRENCY
                         number of concurrent resolutions. (default: 128)
   --multi-apex          allow multiple apex domains in the input file. runs inference for each
                         apex separately. (default: False)
+  -q, --quiet           useful for piping into another tool. (default: False)
+  -s, --silent          do not print any output. requires --output-file. (default: False)
 ```
 
 ### In Python
