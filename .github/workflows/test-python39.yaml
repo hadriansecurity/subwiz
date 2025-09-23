@@ -22,16 +22,13 @@ jobs:
           cache: 'pip'
 
       - name: Install Packages
-        run: |
-          pip install -r requirements.txt \
-            --index-url https://download.pytorch.org/whl/cpu \
-            --extra-index-url https://pypi.org/simple
+        run: >
+          pip install -r requirements.txt
+          --index-url https://download.pytorch.org/whl/cpu 
+          --extra-index-url https://pypi.org/simple
 
       - name: Create test input file
-        run: |
-          echo "example.com" > test_input.txt
+        run: echo "example.com" > test_input.txt
 
       - name: Run subwiz
-        run: |
-          python -m subwiz.cli -i test_input.txt --no-resolve -n 10
-          echo "✅ subwiz ran successfully with Python 3.9!"
+        run: python -m subwiz.cli -i test_input.txt --no-resolve -n 10
