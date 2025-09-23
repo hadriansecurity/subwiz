@@ -1,4 +1,4 @@
-name: Test Python 3.9
+name: Test Python Versions
 
 on:
   push:
@@ -9,16 +9,19 @@ on:
       - main
 
 jobs:
-  test-python39:
+  test-python-versions:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.9
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
       - name: Install Packages
@@ -31,4 +34,4 @@ jobs:
         run: echo "example.com" > test_input.txt
 
       - name: Run subwiz
-        run: python -m subwiz.cli -i test_input.txt --no-resolve -n 10
+        run: python -m subwiz.cli -i test_input.txt -n 10
