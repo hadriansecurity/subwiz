@@ -4,6 +4,7 @@ This module provides the Domain class for representing and validating domain nam
 along with various type validation functions for command-line arguments and
 configuration parameters.
 """
+
 from __future__ import annotations
 
 import argparse
