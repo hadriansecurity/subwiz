@@ -10,9 +10,7 @@ on:
 
 jobs:
   test-python39:
-    name: Test with Python 3.9
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -36,5 +34,4 @@ jobs:
       - name: Run subwiz
         run: |
           python -m subwiz.cli -i test_input.txt --no-resolve -n 10
-          
           echo "✅ subwiz ran successfully with Python 3.9!"
