@@ -1,4 +1,4 @@
-name: Tests
+name: Test Python Versions
 
 on:
   push:
@@ -9,16 +9,19 @@ on:
       - main
 
 jobs:
-  test:
+  test-python-versions:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.13
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
       - name: Install Packages
@@ -27,5 +30,8 @@ jobs:
           --index-url https://download.pytorch.org/whl/cpu 
           --extra-index-url https://pypi.org/simple
 
-      - name: Run Tests
-        run: pytest --verbose
+      - name: Create test input file
+        run: echo "example.com" > test_input.txt
+
+      - name: Run subwiz
+        run: python -m subwiz.cli -i test_input.txt -n 10
