@@ -32,8 +32,8 @@ from subwiz.type import (
 
 
 MODEL_REPO = "HadrianSecurity/subwiz"
-MODEL_FILE = "model.pt"
-TOKENIZER_FILE = "tokenizer.json"
+MODEL_FILE = "model_v2.pt"
+TOKENIZER_FILE = "tokenizer_v2.json"
 CONFIG_FILE = "config.json"
 
 
@@ -102,13 +102,19 @@ def run_inference(
         Set of predicted domain objects
     """
 
-    apex = next(iter(input_domains)).apex_domain
     subs = [dom.subdomain for dom in input_domains]
-    tokenizer_input = ",".join(sorted(subs)) + "[DELIM]"
-    # TODO: pick a different subset, if some were out of context last iteration
+    apex_domain = input_domains[0].apex_domain
+    subdomains_tokenizer_input = ",".join(sorted(subs)) + "[DELIM]"
+    apex_tokenizer_input = "[BOS]" + apex_domain + "[DELIM]"
 
-    x = tokenizer.encode(tokenizer_input)
-    x = [1] * (gpt_model.config.block_size - len(x)) + x
+    subs_x = tokenizer.encode(subdomains_tokenizer_input)
+    apex_x = tokenizer.encode(apex_tokenizer_input)
+
+    # Trim subs to account for the apex part, grab last part
+    subs_x = subs_x[:gpt_model.config.block_size - len(apex_x)]
+
+    x = apex_x + subs_x
+    x = [gpt_model.pad_token] * (gpt_model.config.block_size - len(x)) + x
     x = torch.tensor(x)
 
     blocked_outputs = {dom.subdomain for dom in blocked_domains}
@@ -128,7 +134,7 @@ def run_inference(
         for pred in predictions
     }
 
-    predictions: set[str] = {sub + "." + apex for sub in predictions}
+    predictions: set[str] = {sub + "." + apex_domain for sub in predictions}
 
     predicted_domains: set[Domain] = set()
     for pred in predictions:

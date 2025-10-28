@@ -428,6 +428,10 @@ class GPT(nn.Module):
         idx = idx.to(self.device)
         sequences = idx.unsqueeze(0)
 
+        # Locate the first delimiter token and get its position
+        delim_token_id = self.delim_token
+        trimming_position = (sequences == delim_token_id).nonzero(as_tuple=True)[1][0]
+
         probabilities = torch.tensor([1.0], device=self.device)
 
         finished_sequences = torch.tensor([], device=self.device)
@@ -441,7 +445,11 @@ class GPT(nn.Module):
                 on_iteration()
 
             # trim the sequences down to block size
-            sequences = sequences[:, -self.config.block_size :]
+            if sequences.shape[1] > self.config.block_size:
+                sequences = torch.cat(
+                    (sequences[:, :trimming_position], sequences[:, trimming_position + 1:]),
+                    dim=1,
+                )
 
             # remove any invalid subdomain starts
             outputs = self.tokenizer.batch_decode(sequences[:, -i:])
