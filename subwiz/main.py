@@ -17,10 +17,10 @@ from huggingface_hub.utils import disable_progress_bars, enable_progress_bars
 import torch
 from transformers import PreTrainedTokenizerFast
 
-from subwiz_v2.cli_printer import print_hello, print_log, print_progress_dot
-from subwiz_v2.model import GPT
-from subwiz_v2.resolve import get_registered_domains
-from subwiz_v2.type import (
+from subwiz.cli_printer import print_hello, print_log, print_progress_dot
+from subwiz.model import GPT
+from subwiz.resolve import get_registered_domains
+from subwiz.type import (
     Domain,
     input_domains_type,
     device_type,
