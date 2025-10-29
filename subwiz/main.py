@@ -17,10 +17,10 @@ from huggingface_hub.utils import disable_progress_bars, enable_progress_bars
 import torch
 from transformers import PreTrainedTokenizerFast
 
-from subwiz.cli_printer import print_hello, print_log, print_progress_dot
-from subwiz.model import GPT
-from subwiz.resolve import get_registered_domains
-from subwiz.type import (
+from subwiz_v2.cli_printer import print_hello, print_log, print_progress_dot
+from subwiz_v2.model import GPT
+from subwiz_v2.resolve import get_registered_domains
+from subwiz_v2.type import (
     Domain,
     input_domains_type,
     device_type,
@@ -103,15 +103,15 @@ def run_inference(
     """
 
     subs = [dom.subdomain for dom in input_domains]
-    apex_domain = input_domains[0].apex_domain
+    apex_domain = next(iter(input_domains)).apex_domain
     subdomains_tokenizer_input = ",".join(sorted(subs)) + "[DELIM]"
-    apex_tokenizer_input = "[BOS]" + apex_domain + "[DELIM]"
+    apex_tokenizer_input = apex_domain + "[DELIM]"
 
     subs_x = tokenizer.encode(subdomains_tokenizer_input)
     apex_x = tokenizer.encode(apex_tokenizer_input)
 
     # Trim subs to account for the apex part, grab last part
-    subs_x = subs_x[:gpt_model.config.block_size - len(apex_x)]
+    subs_x = subs_x[-(gpt_model.config.block_size - len(apex_x)):]
 
     x = apex_x + subs_x
     x = [gpt_model.pad_token] * (gpt_model.config.block_size - len(x)) + x

@@ -248,6 +248,7 @@ class GPT(nn.Module):
         self.end_token = self.tokenizer("[END]")["input_ids"][0]
         self.comma_token = self.tokenizer(",")["input_ids"][0]
         self.delim_token = self.tokenizer("[DELIM]")["input_ids"][0]
+        self.pad_token = self.tokenizer("[PAD]")["input_ids"][0]
 
         self.transformer = nn.ModuleDict(
             dict(
@@ -382,6 +383,28 @@ class GPT(nn.Module):
         # assign model inputs to the right device
         return next(self.lm_head.parameters()).device.type
 
+    def _trim_subdomains(
+        self,
+        sequences: torch.Tensor,
+        num_initial_pad_tokens: int,
+        num_tokens_generated: int,
+        ) -> torch.Tensor:
+        if num_tokens_generated == 0:
+            return sequences
+
+        if num_tokens_generated > num_initial_pad_tokens:
+            # Trim after the fist delim token, which is the same for every element of batch
+            trimming_position = 1 + (sequences == self.delim_token).nonzero(as_tuple=True)[1][0]
+        else:
+            # Remove the first pad token
+            trimming_position = 0
+
+        sequences = torch.cat(
+            (sequences[:, :trimming_position], sequences[:, trimming_position + 1:]),
+            dim=1,
+        )
+        return sequences
+
     @torch.no_grad()
     def generate(
         self,
@@ -426,11 +449,8 @@ class GPT(nn.Module):
         run_uuid = uuid.uuid4()
 
         idx = idx.to(self.device)
+        num_initial_pad_tokens = (idx == self.pad_token).sum().item()
         sequences = idx.unsqueeze(0)
-
-        # Locate the first delimiter token and get its position
-        delim_token_id = self.delim_token
-        trimming_position = (sequences == delim_token_id).nonzero(as_tuple=True)[1][0]
 
         probabilities = torch.tensor([1.0], device=self.device)
 
@@ -445,11 +465,11 @@ class GPT(nn.Module):
                 on_iteration()
 
             # trim the sequences down to block size
-            if sequences.shape[1] > self.config.block_size:
-                sequences = torch.cat(
-                    (sequences[:, :trimming_position], sequences[:, trimming_position + 1:]),
-                    dim=1,
-                )
+            sequences = self._trim_subdomains(
+                sequences,
+                num_initial_pad_tokens=num_initial_pad_tokens,
+                num_tokens_generated=i,
+            )
 
             # remove any invalid subdomain starts
             outputs = self.tokenizer.batch_decode(sequences[:, -i:])
