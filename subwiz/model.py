@@ -388,7 +388,7 @@ class GPT(nn.Module):
         sequences: torch.Tensor,
         num_initial_pad_tokens: int,
         num_tokens_generated: int,
-        ) -> torch.Tensor:
+    ) -> torch.Tensor:
         if num_tokens_generated == 0:
             return sequences
 
