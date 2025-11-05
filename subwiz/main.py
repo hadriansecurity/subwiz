@@ -39,6 +39,7 @@ TOKENIZER_FILE = "tokenizer_v2.json"
 CONFIG_FILE = "config.json"
 REVISION = "9a2c505d0312ad6938b27d9b4338020fe37883e8"
 
+
 def get_model_and_tokenizer(
     force_download: bool,
     device: str,
@@ -57,7 +58,6 @@ def get_model_and_tokenizer(
     if quiet:
         disable_progress_bars()
 
-    
     model_path = hf_hub_download(
         repo_id=MODEL_REPO,
         filename=MODEL_FILE,
@@ -323,7 +323,7 @@ def run(
         model_version = "weights_v2" if pkg_version >= "0.5.0" else "weights_v1"
     except Exception:
         model_version = "weights_v1"  # default to old module version
-    
+
     gpt_model, tokenizer = get_model_and_tokenizer(
         force_download, device=device, quiet=quiet, version=model_version
     )
