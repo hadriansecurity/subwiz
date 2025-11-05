@@ -32,12 +32,12 @@ from subwiz.type import (
     concurrency_type,
 )
 
-# v2 stands for the module version not the model weights version
+
 MODEL_REPO = "HadrianSecurity/subwiz"
 MODEL_FILE = "model_v2.pt"
 TOKENIZER_FILE = "tokenizer_v2.json"
 CONFIG_FILE = "config.json"
-# The revision changes with every new model weights version
+# Change revision when realeasing new weights
 REVISION = "9a2c505d0312ad6938b27d9b4338020fe37883e8"
 
 
