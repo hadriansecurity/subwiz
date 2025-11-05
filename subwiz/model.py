@@ -451,7 +451,9 @@ class GPT(nn.Module):
         num_initial_pad_tokens = (idx == self.pad_token).sum().item()
         sequences = idx.unsqueeze(0)
 
-        apex_padded_position = (sequences == self.delim_token).nonzero(as_tuple=True)[1][0]
+        apex_padded_position = (
+            sequences == self.delim_token
+        ).nonzero(as_tuple=True)[1][0]
 
         apex_unpadded_position = 1 + apex_padded_position - num_initial_pad_tokens
 
