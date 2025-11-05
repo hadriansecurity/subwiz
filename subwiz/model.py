@@ -248,6 +248,7 @@ class GPT(nn.Module):
         self.end_token = self.tokenizer("[END]")["input_ids"][0]
         self.comma_token = self.tokenizer(",")["input_ids"][0]
         self.delim_token = self.tokenizer("[DELIM]")["input_ids"][0]
+        self.pad_token = self.tokenizer("[PAD]")["input_ids"][0]
 
         self.transformer = nn.ModuleDict(
             dict(
@@ -382,6 +383,27 @@ class GPT(nn.Module):
         # assign model inputs to the right device
         return next(self.lm_head.parameters()).device.type
 
+    def _trim_subdomains(
+        self,
+        sequences: torch.Tensor,
+        apex_unpadded_position: int,
+        num_tokens_generated: int,
+    ) -> torch.Tensor:
+        if num_tokens_generated == 0:
+            return sequences
+
+        trimming_position = (
+            apex_unpadded_position
+            if num_tokens_generated > apex_unpadded_position
+            else num_tokens_generated
+        )
+
+        sequences = torch.cat(
+            (sequences[:, :trimming_position], sequences[:, trimming_position + 1 :]),
+            dim=1,
+        )
+        return sequences
+
     @torch.no_grad()
     def generate(
         self,
@@ -426,7 +448,14 @@ class GPT(nn.Module):
         run_uuid = uuid.uuid4()
 
         idx = idx.to(self.device)
+        num_initial_pad_tokens = (idx == self.pad_token).sum().item()
         sequences = idx.unsqueeze(0)
+
+        apex_padded_position = (sequences == self.delim_token).nonzero(as_tuple=True)[
+            1
+        ][0]
+
+        apex_unpadded_position = 1 + apex_padded_position - num_initial_pad_tokens
 
         probabilities = torch.tensor([1.0], device=self.device)
 
@@ -441,7 +470,11 @@ class GPT(nn.Module):
                 on_iteration()
 
             # trim the sequences down to block size
-            sequences = sequences[:, -self.config.block_size :]
+            sequences = self._trim_subdomains(
+                sequences,
+                apex_unpadded_position=apex_unpadded_position,
+                num_tokens_generated=i,
+            )
 
             # remove any invalid subdomain starts
             outputs = self.tokenizer.batch_decode(sequences[:, -i:])

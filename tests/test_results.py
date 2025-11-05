@@ -19,7 +19,13 @@ def test_languages():
         no_resolve=True,
     )
     print(results)
-    assert "english.hadrian.io" in results
+    assert {
+        "english.hadrian.io",
+        "french.hadrian.io",
+        "spanish.hadrian.io",
+        "portuguese.hadrian.io",
+        "dutch.hadrian.io",
+    } & set(results)
 
 
 def test_numbers():
