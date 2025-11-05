@@ -399,7 +399,7 @@ class GPT(nn.Module):
         )
 
         sequences = torch.cat(
-            (sequences[:, :trimming_position], sequences[:, trimming_position + 1:]),
+            (sequences[:, :trimming_position], sequences[:, trimming_position + 1 :]),
             dim=1,
         )
         return sequences

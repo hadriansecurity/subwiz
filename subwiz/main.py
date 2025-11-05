@@ -111,7 +111,7 @@ def run_inference(
     apex_x = tokenizer.encode(apex_tokenizer_input)
 
     # Trim subs to account for the apex part, grab last part
-    subs_x = subs_x[-(gpt_model.config.block_size - len(apex_x)):]
+    subs_x = subs_x[-(gpt_model.config.block_size - len(apex_x)) :]
 
     x = apex_x + subs_x
     x = [gpt_model.pad_token] * (gpt_model.config.block_size - len(x)) + x
