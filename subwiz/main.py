@@ -12,6 +12,8 @@ import re
 from collections import defaultdict
 from typing import Callable
 
+from importlib.metadata import version
+
 from huggingface_hub import hf_hub_download
 from huggingface_hub.utils import disable_progress_bars, enable_progress_bars
 import torch
@@ -35,12 +37,13 @@ MODEL_REPO = "HadrianSecurity/subwiz"
 MODEL_FILE = "model_v2.pt"
 TOKENIZER_FILE = "tokenizer_v2.json"
 CONFIG_FILE = "config.json"
-
+REVISION = "9a2c505d0312ad6938b27d9b4338020fe37883e8"
 
 def get_model_and_tokenizer(
     force_download: bool,
     device: str,
     quiet: bool,
+    version: str = "weights_v2",
 ) -> tuple[GPT, PreTrainedTokenizerFast]:
     """Download files from HuggingFace to run subwiz. Caches in local file system.
 
@@ -54,14 +57,24 @@ def get_model_and_tokenizer(
     if quiet:
         disable_progress_bars()
 
+    
     model_path = hf_hub_download(
-        repo_id=MODEL_REPO, filename=MODEL_FILE, force_download=force_download
+        repo_id=MODEL_REPO,
+        filename=MODEL_FILE,
+        force_download=force_download,
+        revision=REVISION,
     )
     tokenizer_path = hf_hub_download(
-        repo_id=MODEL_REPO, filename=TOKENIZER_FILE, force_download=force_download
+        repo_id=MODEL_REPO,
+        filename=TOKENIZER_FILE,
+        force_download=force_download,
+        revision=REVISION,
     )
     hf_hub_download(
-        repo_id=MODEL_REPO, filename=CONFIG_FILE, force_download=force_download
+        repo_id=MODEL_REPO,
+        filename=CONFIG_FILE,
+        force_download=force_download,
+        revision=REVISION,
     )
     if quiet:
         enable_progress_bars()
@@ -304,8 +317,15 @@ def run(
             "Use the --multi-apex flag to process them all."
         )
 
+    # Auto-detect version from package
+    try:
+        pkg_version = version("subwiz")
+        model_version = "weights_v2" if pkg_version >= "0.5.0" else "weights_v1"
+    except Exception:
+        model_version = "weights_v1"  # default to old module version
+    
     gpt_model, tokenizer = get_model_and_tokenizer(
-        force_download, device=device, quiet=quiet
+        force_download, device=device, quiet=quiet, version=model_version
     )
     found_domains = set()
 
