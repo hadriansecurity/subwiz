@@ -386,18 +386,17 @@ class GPT(nn.Module):
     def _trim_subdomains(
         self,
         sequences: torch.Tensor,
-        num_initial_pad_tokens: int,
+        apex_unpadded_position: int,
         num_tokens_generated: int,
     ) -> torch.Tensor:
         if num_tokens_generated == 0:
             return sequences
 
-        if num_tokens_generated > num_initial_pad_tokens:
-            # Trim after the fist delim token, which is the same for every element of batch
-            trimming_position = 1 + (sequences == self.delim_token).nonzero(as_tuple=True)[1][0]
-        else:
-            # Remove the first pad token
-            trimming_position = 0
+        trimming_position = (
+            apex_unpadded_position
+            if num_tokens_generated > apex_unpadded_position
+            else num_tokens_generated
+        )
 
         sequences = torch.cat(
             (sequences[:, :trimming_position], sequences[:, trimming_position + 1:]),
@@ -452,6 +451,10 @@ class GPT(nn.Module):
         num_initial_pad_tokens = (idx == self.pad_token).sum().item()
         sequences = idx.unsqueeze(0)
 
+        apex_padded_position = (sequences == self.delim_token).nonzero(as_tuple=True)[1][0]
+
+        apex_unpadded_position = 1 + apex_padded_position - num_initial_pad_tokens
+
         probabilities = torch.tensor([1.0], device=self.device)
 
         finished_sequences = torch.tensor([], device=self.device)
@@ -467,7 +470,7 @@ class GPT(nn.Module):
             # trim the sequences down to block size
             sequences = self._trim_subdomains(
                 sequences,
-                num_initial_pad_tokens=num_initial_pad_tokens,
+                apex_unpadded_position=apex_unpadded_position,
                 num_tokens_generated=i,
             )
 
