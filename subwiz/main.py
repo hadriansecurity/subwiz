@@ -12,8 +12,6 @@ import re
 from collections import defaultdict
 from typing import Callable
 
-from importlib.metadata import version
-
 from huggingface_hub import hf_hub_download
 from huggingface_hub.utils import disable_progress_bars, enable_progress_bars
 import torch
@@ -34,11 +32,9 @@ from subwiz.type import (
 
 
 MODEL_REPO = "HadrianSecurity/subwiz"
-MODEL_FILE = "model_v2.pt"
-TOKENIZER_FILE = "tokenizer_v2.json"
+MODEL_FILE = "model.pt"
+TOKENIZER_FILE = "tokenizer.json"
 CONFIG_FILE = "config.json"
-# Change revision when realeasing new weights
-REVISION = "9a2c505d0312ad6938b27d9b4338020fe37883e8"
 
 
 def get_model_and_tokenizer(
@@ -59,22 +55,13 @@ def get_model_and_tokenizer(
         disable_progress_bars()
 
     model_path = hf_hub_download(
-        repo_id=MODEL_REPO,
-        filename=MODEL_FILE,
-        force_download=force_download,
-        revision=REVISION,
+        repo_id=MODEL_REPO, filename=MODEL_FILE, force_download=force_download
     )
     tokenizer_path = hf_hub_download(
-        repo_id=MODEL_REPO,
-        filename=TOKENIZER_FILE,
-        force_download=force_download,
-        revision=REVISION,
+        repo_id=MODEL_REPO, filename=TOKENIZER_FILE, force_download=force_download
     )
     hf_hub_download(
-        repo_id=MODEL_REPO,
-        filename=CONFIG_FILE,
-        force_download=force_download,
-        revision=REVISION,
+        repo_id=MODEL_REPO, filename=CONFIG_FILE, force_download=force_download
     )
     if quiet:
         enable_progress_bars()
@@ -115,19 +102,13 @@ def run_inference(
         Set of predicted domain objects
     """
 
+    apex = next(iter(input_domains)).apex_domain
     subs = [dom.subdomain for dom in input_domains]
-    apex_domain = next(iter(input_domains)).apex_domain
-    subdomains_tokenizer_input = ",".join(sorted(subs)) + "[DELIM]"
-    apex_tokenizer_input = apex_domain + "[DELIM]"
+    tokenizer_input = ",".join(sorted(subs)) + "[DELIM]"
+    # TODO: pick a different subset, if some were out of context last iteration
 
-    subs_x = tokenizer.encode(subdomains_tokenizer_input)
-    apex_x = tokenizer.encode(apex_tokenizer_input)
-
-    # Trim subs to account for the apex part, grab last part
-    subs_x = subs_x[-(gpt_model.config.block_size - len(apex_x)) :]
-
-    x = apex_x + subs_x
-    x = [gpt_model.pad_token] * (gpt_model.config.block_size - len(x)) + x
+    x = tokenizer.encode(tokenizer_input)
+    x = [1] * (gpt_model.config.block_size - len(x)) + x
     x = torch.tensor(x)
 
     blocked_outputs = {dom.subdomain for dom in blocked_domains}
@@ -147,7 +128,7 @@ def run_inference(
         for pred in predictions
     }
 
-    predictions: set[str] = {sub + "." + apex_domain for sub in predictions}
+    predictions: set[str] = {sub + "." + apex for sub in predictions}
 
     predicted_domains: set[Domain] = set()
     for pred in predictions:
