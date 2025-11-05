@@ -45,7 +45,6 @@ def get_model_and_tokenizer(
     force_download: bool,
     device: str,
     quiet: bool,
-    version: str = "weights_v2",
 ) -> tuple[GPT, PreTrainedTokenizerFast]:
     """Download files from HuggingFace to run subwiz. Caches in local file system.
 
@@ -318,15 +317,8 @@ def run(
             "Use the --multi-apex flag to process them all."
         )
 
-    # Auto-detect version from package
-    try:
-        pkg_version = version("subwiz")
-        model_version = "weights_v2" if pkg_version >= "0.5.0" else "weights_v1"
-    except Exception:
-        model_version = "weights_v1"  # default to old module version
-
     gpt_model, tokenizer = get_model_and_tokenizer(
-        force_download, device=device, quiet=quiet, version=model_version
+        force_download, device=device, quiet=quiet
     )
     found_domains = set()
 
