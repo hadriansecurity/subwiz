@@ -25,7 +25,7 @@ def test_languages():
         "spanish.hadrian.io",
         "portuguese.hadrian.io",
         "dutch.hadrian.io",
-    } | results
+    } & set(results)
 
 def test_numbers():
     """Test that numeric subdomain patterns are generated correctly.
