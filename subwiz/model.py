@@ -395,7 +395,7 @@ class GPT(nn.Module):
         trimming_position = (
             apex_unpadded_position
             if num_tokens_generated > apex_unpadded_position
-            else num_tokens_generated
+            else 0
         )
 
         sequences = torch.cat(
