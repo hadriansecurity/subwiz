@@ -12,8 +12,6 @@ import re
 from collections import defaultdict
 from typing import Callable
 
-from importlib.metadata import version
-
 from huggingface_hub import hf_hub_download
 from huggingface_hub.utils import disable_progress_bars, enable_progress_bars
 import torch
