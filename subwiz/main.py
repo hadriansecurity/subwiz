@@ -233,7 +233,7 @@ def _get_domains_for_group(
             return {str(dom) for dom in predictions}
 
         predictions_that_resolve = asyncio.run(
-            get_registered_domains(predictions, resolution_concurrency)
+            get_registered_domains(predictions, resolution_concurrency, apex_domain=apex)
         )
 
         if not quiet:
