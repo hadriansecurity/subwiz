@@ -5,6 +5,8 @@ and orchestrating the subdomain discovery process. It handles model loading,
 tokenization, inference execution, and result processing.
 """
 
+from __future__ import annotations
+
 import argparse
 import asyncio
 import os
@@ -19,7 +21,7 @@ from transformers import PreTrainedTokenizerFast
 
 from subwiz.cli_printer import print_hello, print_log, print_progress_dot
 from subwiz.model import GPT
-from subwiz.resolve import get_registered_domains
+from subwiz.resolve import detect_wildcard, get_registered_domains
 from subwiz.type import (
     Domain,
     input_domains_type,
@@ -29,7 +31,6 @@ from subwiz.type import (
     temperature_type,
     concurrency_type,
 )
-
 
 MODEL_REPO = "HadrianSecurity/subwiz"
 MODEL_FILE = "model_v2.pt"
@@ -170,6 +171,7 @@ def _get_domains_for_group(
     no_resolve: bool,
     resolution_concurrency: int,
     quiet: bool,
+    wildcard_ips: set[str] | None = None,
 ) -> set[str]:
     """For a group of subdomains that share an apex: run inference and check if they resolve, recursively.
 
@@ -186,6 +188,8 @@ def _get_domains_for_group(
         no_resolve: Whether to skip DNS resolution
         resolution_concurrency: Number of concurrent DNS resolutions
         print_cli_progress: Whether to print progress information
+        wildcard_ips: Catch-all IPs of a detected wildcard record for this apex,
+            used to filter out false positives. None if no wildcard is present.
 
     Returns:
         Set of discovered subdomain strings
@@ -233,7 +237,7 @@ def _get_domains_for_group(
             return {str(dom) for dom in predictions}
 
         predictions_that_resolve = asyncio.run(
-            get_registered_domains(predictions, resolution_concurrency)
+            get_registered_domains(predictions, resolution_concurrency, wildcard_ips)
         )
 
         if not quiet:
@@ -272,6 +276,7 @@ def run(
     multi_apex: bool = False,
     max_recursion: int = 5,
     quiet: bool = True,
+    wildcard: str = "filter",
 ) -> list[str]:
     """Check types, download model, get new subdomains for each apex.
 
@@ -287,6 +292,9 @@ def run(
         multi_apex: Whether to allow multiple apex domains
         max_recursion: Maximum recursion depth for discovery
         print_cli_progress: Whether to print progress information
+        wildcard: How to handle apexes with a wildcard DNS record. "filter"
+            (default) keeps only subdomains resolving outside the wildcard IP
+            set; "skip" drops the apex entirely.
 
     Returns:
         List of discovered subdomain strings
@@ -305,6 +313,11 @@ def run(
     temperature = temperature_type(temperature)
     resolution_concurrency = concurrency_type(resolution_concurrency)
 
+    if wildcard not in ("filter", "skip"):
+        raise argparse.ArgumentTypeError(
+            f'wildcard should be "filter" or "skip": {wildcard}'
+        )
+
     domain_groups = defaultdict(set)
     for dom in domain_objects:
         domain_groups[dom.apex_domain].add(dom)
@@ -321,6 +334,28 @@ def run(
     found_domains = set()
 
     for apex in sorted(domain_groups):
+        # Detect wildcards once, up front, before the expensive inference. A
+        # wildcard makes plain DNS resolution meaningless (every subdomain
+        # resolves), so we either skip the apex or filter to subdomains that
+        # resolve outside the catch-all IP set.
+        wildcard_ips = None
+        if not no_resolve:
+            wildcard_ips = asyncio.run(detect_wildcard(apex, resolution_concurrency))
+            if wildcard_ips:
+                if wildcard == "skip":
+                    if not quiet:
+                        print_log(
+                            f"wildcard DNS detected on {apex}, skipping "
+                            f"(resolves to {', '.join(sorted(wildcard_ips))})"
+                        )
+                    continue
+                if not quiet:
+                    print_log(
+                        f"wildcard DNS detected on {apex}, filtering to "
+                        f"subdomains resolving outside "
+                        f"{', '.join(sorted(wildcard_ips))}"
+                    )
+
         found_domains |= _get_domains_for_group(
             domains_in_group=domain_groups[apex],
             all_apexes=set(domain_groups.keys()),
@@ -334,6 +369,7 @@ def run(
             no_resolve=no_resolve,
             resolution_concurrency=resolution_concurrency,
             quiet=quiet,
+            wildcard_ips=wildcard_ips,
         )
 
     return sorted(found_domains)

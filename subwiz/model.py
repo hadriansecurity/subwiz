@@ -23,7 +23,6 @@ from torch.nn import functional as F
 from transformers import PreTrainedTokenizerFast
 from typing import Callable, Optional
 
-
 VALID_SUBDOMAIN_RE = re.compile(
     r"^(?!-)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*(?<!\.)$",
     re.IGNORECASE,
