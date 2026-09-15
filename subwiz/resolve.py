@@ -26,9 +26,6 @@ NAME_SERVERS = ["1.1.1.1", "1.0.0.1", "8.8.8.8"]
 TIMEOUT = 3
 TRIES = 1
 
-# Number of random subdomains probed to detect a wildcard record, and the
-# length of each random label. Labels are long enough that a real subdomain
-# collision is effectively impossible.
 WILDCARD_PROBE_COUNT = 3
 WILDCARD_LABEL_LENGTH = 20
 
@@ -93,8 +90,6 @@ async def detect_wildcard(
         *[_resolve_ips(probe, resolver, semaphore) for probe in probes]
     )
 
-    # A wildcard exists only if every random probe resolved. If any random
-    # label fails to resolve, there is no catch-all record.
     if not all(probe_ips):
         return set()
 

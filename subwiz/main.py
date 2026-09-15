@@ -334,10 +334,6 @@ def run(
     found_domains = set()
 
     for apex in sorted(domain_groups):
-        # Detect wildcards once, up front, before the expensive inference. A
-        # wildcard makes plain DNS resolution meaningless (every subdomain
-        # resolves), so we either skip the apex or filter to subdomains that
-        # resolve outside the catch-all IP set.
         wildcard_ips = None
         if not no_resolve:
             wildcard_ips = asyncio.run(detect_wildcard(apex, resolution_concurrency))
