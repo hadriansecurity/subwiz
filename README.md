@@ -33,12 +33,13 @@ Seed subwiz with these subdomains:
 usage: cli.py [-h] -i INPUT_FILE [-o OUTPUT_FILE] [-n NUM_PREDICTIONS] [--no-resolve]
               [--force-download] [--max-recursion MAX_RECURSION] [-t TEMPERATURE]
               [-d {auto,cpu,cuda,mps}] [-m MAX_NEW_TOKENS]
-              [--resolution-concurrency RESOLUTION_CONCURRENCY] [--multi-apex] [-q] [-s]
+              [--resolution-concurrency RESOLUTION_CONCURRENCY] [--multi-apex]
+              [--wildcard {filter,skip}] [-q] [-s]
 
 options:
   -h, --help            show this help message and exit
   -i, --input-file INPUT_FILE
-                        file containing new-line-separated subdomains. (default: None)
+                        file containing new-line-separated subdomains.
   -o, --output-file OUTPUT_FILE
                         output file to write new-line separated subdomains to. (default: None)
   -n, --num-predictions NUM_PREDICTIONS
@@ -58,6 +59,10 @@ options:
                         number of concurrent resolutions. (default: 128)
   --multi-apex          allow multiple apex domains in the input file. runs inference for each
                         apex separately. (default: False)
+  --wildcard {filter,skip}
+                        how to handle apexes with a wildcard DNS record: 'filter' keeps only
+                        subdomains resolving outside the wildcard IP set; 'skip' drops the apex.
+                        (default: filter)
   -q, --quiet           useful for piping into another tool. (default: False)
   -s, --silent          do not print any output. requires --output-file. (default: False)
 ```

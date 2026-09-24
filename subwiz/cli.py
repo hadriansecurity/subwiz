@@ -100,6 +100,14 @@ parser.add_argument(
     action="store_true",
 )
 parser.add_argument(
+    "--wildcard",
+    help="how to handle apexes with a wildcard DNS record: 'filter' keeps only "
+    "subdomains resolving outside the wildcard IP set; 'skip' drops the apex.",
+    dest="wildcard",
+    default="filter",
+    choices=["filter", "skip"],
+)
+parser.add_argument(
     "-q",
     "--quiet",
     help="useful for piping into another tool.",
